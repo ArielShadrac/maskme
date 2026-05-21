@@ -77,7 +77,8 @@
 <li class="toctree-l1"><a class="reference internal" href="#part-1-your-first-anonymization">Part 1: Your First Anonymization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#part-2-understanding-strategies">Part 2: Understanding Strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#part-3-measuring-privacy-and-utility">Part 3: Measuring Privacy and Utility</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#part-4-real-world-example">Part 4: Real-World Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#part-4-anonymizing-unstructured-text-with-ner">Part 4: Anonymizing Unstructured Text with NER</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#part-5-real-world-example">Part 5: Real-World Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#next-steps">Next Steps</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
@@ -88,6 +89,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../reference/strategies.html">Anonymization Strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/ner.html">NER Module — Unstructured Text Anonymization</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
 <ul>
@@ -818,8 +820,140 @@
 <section id="part-3-measuring-privacy-and-utility">
 <h1>Part 3: Measuring Privacy and Utility</h1>
 </section>
-<section id="part-4-real-world-example">
-<h1>Part 4: Real-World Example</h1>
+<section id="part-4-anonymizing-unstructured-text-with-ner">
+<h1>Part 4: Anonymizing Unstructured Text with NER</h1>
+<p>So far we’ve worked with <strong>structured data</strong> (tabular records). But what about <strong>unstructured text</strong> — patient notes, emails, support tickets, or any free-form text containing names, locations, or dates?</p>
+<p>MaskMe’s NER module detects and replaces personally identifiable information in free text using Named Entity Recognition (spaCy).</p>
+<p>The NER module requires extra dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>maskme<span class="o">[</span>ner<span class="o">]</span>
+</span><span id="line-2">python<span class="w"> </span>-m<span class="w"> </span>spacy<span class="w"> </span>download<span class="w"> </span>en_core_web_lg
+</span><span id="line-3">python<span class="w"> </span>-m<span class="w"> </span>spacy<span class="w"> </span>download<span class="w"> </span>fr_core_news_lg
+</span></code></pre></div>
+</div>
+<p>MaskMe auto-detects French (<code class="docutils literal notranslate"><span class="pre">fr</span></code>) and English (<code class="docutils literal notranslate"><span class="pre">en</span></code>). Install only the language(s) you need.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>ner<span class="w"> </span>document.txt<span class="w"> </span>-o<span class="w"> </span>document_anon.txt
+</span></code></pre></div>
+</div>
+<p><strong>Example</strong> (<code class="docutils literal notranslate"><span class="pre">report.txt</span></code>):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Le Dr. Martin a diagnostiqué Alice Johnson le 12 janvier 2024
+</span><span id="line-2">à l'Hôpital Saint-Louis à Paris. Le traitement commence à 14h30.
+</span></code></pre></div>
+</div>
+<p>Run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>ner<span class="w"> </span>report.txt<span class="w"> </span>-l<span class="w"> </span>fr<span class="w"> </span>-o<span class="w"> </span>report_anon.txt
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong> (<code class="docutils literal notranslate"><span class="pre">report_anon.txt</span></code>):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Le [PERSON] a diagnostiqué [PERSON] le [DATE]
+</span><span id="line-2">à l'[ORGANISATION] à [LOCATION]. Le traitement commence à [TIME].
+</span></code></pre></div>
+</div>
+<p>Key CLI options:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-o,</span> <span class="pre">--output</span></code></p></td>
+<td><p>Output file path (stdout if omitted)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-l,</span> <span class="pre">--language</span></code></p></td>
+<td><p>Language override (<code class="docutils literal notranslate"><span class="pre">fr</span></code> or <code class="docutils literal notranslate"><span class="pre">en</span></code>); auto-detected if omitted</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--lines</span></code></p></td>
+<td><p>Process each line as a separate text (batch mode)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code></p></td>
+<td><p>Enable debug logging</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Line-by-line mode</strong> is useful when each line is a separate record:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>ner<span class="w"> </span>patients.txt<span class="w"> </span>--lines<span class="w"> </span>-o<span class="w"> </span>patients_anon.txt
+</span></code></pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">maskme.ner</span><span class="w"> </span><span class="kn">import</span> <span class="n">mask</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="c1"># Single text → returns a PipelineResult</span>
+</span><span id="line-4"><span class="n">result</span> <span class="o">=</span> <span class="n">mask</span><span class="p">(</span><span class="s2">"Alice habite à Paris."</span><span class="p">)</span>
+</span><span id="line-5"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+</span><span id="line-6"><span class="c1"># → '[PERSON] habite à [LOCATION].'</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span>
+</span><span id="line-9"><span class="c1"># → [Entity(text='Alice', label=&lt;EntityLabel.PERSON: 'PERSON'&gt;, ...),</span>
+</span><span id="line-10"><span class="c1">#     Entity(text='Paris', label=&lt;EntityLabel.LOCATION: 'LOCATION'&gt;, ...)]</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">language</span><span class="p">)</span>
+</span><span id="line-13"><span class="c1"># → 'fr'</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="c1"># Batch processing → returns a list of PipelineResult</span>
+</span><span id="line-16"><span class="n">results</span> <span class="o">=</span> <span class="n">mask</span><span class="p">([</span>
+</span><span id="line-17">    <span class="s2">"Alice habite à Paris."</span><span class="p">,</span>
+</span><span id="line-18">    <span class="s2">"John lives in London."</span><span class="p">,</span>
+</span><span id="line-19"><span class="p">])</span>
+</span><span id="line-20"><span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+</span><span id="line-21">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">language</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-22"><span class="c1"># → [fr] [PERSON] habite à [LOCATION].</span>
+</span><span id="line-23"><span class="c1"># → [en] [PERSON] lives in [LOCATION].</span>
+</span><span id="line-24">
+</span><span id="line-25"><span class="c1"># Language hint (skip auto-detection)</span>
+</span><span id="line-26"><span class="n">result</span> <span class="o">=</span> <span class="n">mask</span><span class="p">(</span><span class="s2">"Dr. Smith works at General Hospital."</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s2">"en"</span><span class="p">)</span>
+</span><span id="line-27"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+</span><span id="line-28"><span class="c1"># → '[PERSON] works at [ORGANISATION].'</span>
+</span></code></pre></div>
+</div>
+<p>Detected entity types are replaced with bracketed tags:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Entity Label</p></th>
+<th class="head"><p>Tag</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PERSON</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[PERSON]</span></code></p></td>
+<td><p>Names, doctors, patients</p></td>
+</tr>
+<tr class="row-odd"><td><p>LOCATION</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[LOCATION]</span></code></p></td>
+<td><p>Cities, countries, addresses</p></td>
+</tr>
+<tr class="row-even"><td><p>ORGANISATION</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[ORGANISATION]</span></code></p></td>
+<td><p>Hospitals, companies</p></td>
+</tr>
+<tr class="row-odd"><td><p>DATE</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[DATE]</span></code></p></td>
+<td><p>Full dates, “12 janvier 2024”</p></td>
+</tr>
+<tr class="row-even"><td><p>TIME</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[TIME]</span></code></p></td>
+<td><p>Times, “14h30”</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">result</span> <span class="o">=</span> <span class="n">mask</span><span class="p">(</span><span class="s2">"Alice habite à Paris."</span><span class="p">)</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">result</span><span class="o">.</span><span class="n">output</span>        <span class="c1"># Tagged text</span>
+</span><span id="line-4"><span class="n">result</span><span class="o">.</span><span class="n">input</span>         <span class="c1"># Original text</span>
+</span><span id="line-5"><span class="n">result</span><span class="o">.</span><span class="n">entities</span>      <span class="c1"># List of detected Entity objects</span>
+</span><span id="line-6"><span class="n">result</span><span class="o">.</span><span class="n">language</span>      <span class="c1"># Detected language</span>
+</span><span id="line-7"><span class="n">result</span><span class="o">.</span><span class="n">entity_count</span>  <span class="c1"># Number of entities masked</span>
+</span><span id="line-8"><span class="n">result</span><span class="o">.</span><span class="n">labels_found</span> <span class="c1"># Deduplicated, sorted entity labels</span>
+</span><span id="line-9"><span class="n">result</span><span class="o">.</span><span class="n">stats</span>         <span class="c1"># Processing metadata (timing, detectors)</span>
+</span><span id="line-10"><span class="n">result</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>     <span class="c1"># Serialize everything to a dict</span>
+</span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Without spaCy installed, the module degrades gracefully: <code class="docutils literal notranslate"><span class="pre">mask()</span></code> returns the original text unchanged and logs a warning with install instructions.</p>
+</div>
+</section>
+<section id="part-5-real-world-example">
+<h1>Part 5: Real-World Example</h1>
 <p>Let’s put it all together with a realistic scenario:</p>
 <p><strong>Scenario</strong>: Healthcare organization wants to share patient visit data for research while protecting privacy and meeting HIPAA compliance requirements.</p>
 <p><strong>Field classification</strong> (using privacy-compliance decision tree):</p>
@@ -864,6 +998,7 @@
 <li><p><strong>Need to build a custom strategy?</strong> See <a class="reference internal" href="../how-to/custom-strategy.html"><span class="doc">How to Create a Custom Strategy</span></a></p></li>
 <li><p><strong>Want to know more about each strategy?</strong> See <a class="reference internal" href="../reference/strategies.html"><span class="doc">Anonymization Strategies</span></a></p></li>
 <li><p><strong>Building an application with MaskMe?</strong> See <a class="reference internal" href="../reference/api.html"><span class="doc">API Reference</span></a></p></li>
+<li><p><strong>Anonymizing unstructured text?</strong> See <a class="reference internal" href="../reference/ner.html"><span class="doc">NER Module — Unstructured Text Anonymization</span></a></p></li>
 <li><p><strong>Curious about the architecture?</strong> See <a class="reference internal" href="../explanation/architecture.html"><span class="doc">Architecture: The Anonymization Engine</span></a></p></li>
 </ul>
 <ol class="arabic simple">
@@ -884,7 +1019,8 @@
 <li><a :data-current="activeSection === '#part-1-your-first-anonymization'" class="reference internal" href="#part-1-your-first-anonymization">Part 1: Your First Anonymization</a></li>
 <li><a :data-current="activeSection === '#part-2-understanding-strategies'" class="reference internal" href="#part-2-understanding-strategies">Part 2: Understanding Strategies</a></li>
 <li><a :data-current="activeSection === '#part-3-measuring-privacy-and-utility'" class="reference internal" href="#part-3-measuring-privacy-and-utility">Part 3: Measuring Privacy and Utility</a></li>
-<li><a :data-current="activeSection === '#part-4-real-world-example'" class="reference internal" href="#part-4-real-world-example">Part 4: Real-World Example</a></li>
+<li><a :data-current="activeSection === '#part-4-anonymizing-unstructured-text-with-ner'" class="reference internal" href="#part-4-anonymizing-unstructured-text-with-ner">Part 4: Anonymizing Unstructured Text with NER</a></li>
+<li><a :data-current="activeSection === '#part-5-real-world-example'" class="reference internal" href="#part-5-real-world-example">Part 5: Real-World Example</a></li>
 <li><a :data-current="activeSection === '#next-steps'" class="reference internal" href="#next-steps">Next Steps</a></li>
 </ul>
 </div>

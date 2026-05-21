@@ -19,6 +19,7 @@ Welcome to MaskMe
 
    reference/strategies
    reference/api
+   reference/ner
 
 .. toctree::
    :maxdepth: 2

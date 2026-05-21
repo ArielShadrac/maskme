@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>NER Module — Unstructured Text Anonymization | MaskMe</title>
+<meta content="NER Module — Unstructured Text Anonymization | MaskMe" property="og:title"/>
+<meta content="NER Module — Unstructured Text Anonymization | MaskMe" name="twitter:title"/>
+<link href="../_static/pygments.css?v=03e43079" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=2fb37986" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="../explanation/introduction.html" rel="next" title="Introduction to MaskMe"/>
+<link href="api.html" rel="prev" title="API Reference"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">MaskMe</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">MaskMe</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html">Getting Started with MaskMe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-1-your-first-anonymization">Part 1: Your First Anonymization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-2-understanding-strategies">Part 2: Understanding Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-3-measuring-privacy-and-utility">Part 3: Measuring Privacy and Utility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-4-anonymizing-unstructured-text-with-ner">Part 4: Anonymizing Unstructured Text with NER</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-5-real-world-example">Part 5: Real-World Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#next-steps">Next Steps</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/custom-strategy.html">How to Create a Custom Strategy</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">Anonymization Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NER Module — Unstructured Text Anonymization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/introduction.html">Introduction to MaskMe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/architecture.html">Architecture: The Anonymization Engine</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">MaskMe</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">NER Module — Unstructured Text Anonymization</span>
+</nav>
+<div id="content" role="main">
+<section id="ner-module-unstructured-text-anonymization">
+<h1>NER Module — Unstructured Text Anonymization</h1>
+<p>MaskMe’s NER module detects and replaces personally identifiable information in
+<strong>free-form text</strong> using Named Entity Recognition via spaCy. It operates independently
+from the structured-data engine and is invoked through the <code class="docutils literal notranslate"><span class="pre">maskme</span> <span class="pre">ner</span></code> CLI subcommand
+or the <code class="docutils literal notranslate"><span class="pre">maskme.ner</span></code> Python API.</p>
+<section id="installation">
+<h2>Installation</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>maskme<span class="o">[</span>ner<span class="o">]</span>
+</span><span id="line-2">python<span class="w"> </span>-m<span class="w"> </span>spacy<span class="w"> </span>download<span class="w"> </span>en_core_web_lg
+</span><span id="line-3">python<span class="w"> </span>-m<span class="w"> </span>spacy<span class="w"> </span>download<span class="w"> </span>fr_core_news_lg
+</span></code></pre></div>
+</div>
+<p>Supported languages: <code class="docutils literal notranslate"><span class="pre">fr</span></code> (French) and <code class="docutils literal notranslate"><span class="pre">en</span></code> (English). Install only the models
+you need.</p>
+</section>
+<section id="module-maskme.ner">
+<span id="api-reference"></span><h2>API Reference</h2>
+<section id="maskme-ner">
+<h3>maskme.ner</h3>
+<p>Unstructured text anonymization for MaskMe.</p>
+<p>Detects and masks PII in free text (medical reports, legal documents,
+emails, etc.) using spaCy NER, with support for French and English.</p>
+<p>The <a class="reference internal" href="#maskme.ner.mask" title="maskme.ner.mask"><code class="xref py py-func docutils literal notranslate"><span class="pre">mask()</span></code></a> function is the <strong>single entry point</strong>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">maskme.ner</span><span class="w"> </span><span class="kn">import</span> <span class="n">mask</span>
+</span><span id="line-2"><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">mask</span><span class="p">(</span><span class="s2">"Alice habite à Paris."</span><span class="p">)</span>
+</span><span id="line-3"><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">output</span>
+</span><span id="line-4"><span class="go">'[PERSON] habite à [LOCATION].'</span>
+</span></code></pre></div>
+</div>
+<p>Batch:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">mask</span><span class="p">([</span><span class="s2">"Alice habite à Paris."</span><span class="p">,</span> <span class="s2">"John lives in London."</span><span class="p">])</span>
+</span><span id="line-2"><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+</span><span id="line-3"><span class="go">['[PERSON] habite à [LOCATION].', '[PERSON] lives in [LOCATION].']</span>
+</span></code></pre></div>
+</div>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="maskme.ner.Detector">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">Detector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/maskme/ner/base.html#Detector"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Protocol that every entity detector must satisfy.</p>
+<p>A detector receives a text string and returns a list of Entity objects.
+It must never modify the text or apply any masking.</p>
+<p>The name attribute is used by the pipeline for logging, priority
+resolution, and conflict reporting.</p>
+<p>Example implementation skeleton:</p>
+<blockquote>
+<div><dl>
+<dt>class MyDetector:</dt><dd><p>name     = “my_detector”
+priority = 50   # higher = wins span conflicts</p>
+<dl class="simple">
+<dt>def detect(</dt><dd><p>self,
+text: str,
+language: str = “fr”,
+<a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs,</p>
+</dd>
+<dt>) -&gt; List[Entity]:</dt><dd><p>entities = []
+# … find spans …
+return entities</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="maskme.ner.Detector.detect">
+<span class="sig-name descname"><span class="pre">detect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fr'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/maskme/ner/base.html#Detector.detect"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Detect PII entities in a text string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> – The raw text to analyse.</p></li>
+<li><p><strong>language</strong> – ISO 639-1 language code (“fr” or “en”).
+Detectors may use this to apply language-specific
+patterns or load the appropriate NLP model.</p></li>
+<li><p><strong>**kwargs</strong> – Detector-specific parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of Entity objects found in the text.
+Must never return overlapping spans from the same detector.
+Returns an empty list if no entities are found.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Detector.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span></dt>
+<dd><p>Stable identifier used in registry keys and entity.detector field.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Detector.priority">
+<span class="sig-name descname"><span class="pre">priority</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span></dt>
+<dd><p>Priority for span conflict resolution (higher wins).
+spaCy detectors default to 50 (contextual but probabilistic).</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="maskme.ner.Entity">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">Entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#maskme.ner.EntityLabel" title="maskme.ner.base.EntityLabel"><span class="pre">EntityLabel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/maskme/ner/base.html#Entity"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A single detected PII span within a text.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.text">
+<span class="sig-name descname"><span class="pre">text</span></span></dt>
+<dd><p>The exact substring that was detected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.label">
+<span class="sig-name descname"><span class="pre">label</span></span></dt>
+<dd><p>Standardised entity label (EntityLabel).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#maskme.ner.EntityLabel" title="maskme.ner.base.EntityLabel">maskme.ner.base.EntityLabel</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.start">
+<span class="sig-name descname"><span class="pre">start</span></span></dt>
+<dd><p>Character offset of the start of the span (inclusive).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.end">
+<span class="sig-name descname"><span class="pre">end</span></span></dt>
+<dd><p>Character offset of the end of the span (exclusive).
+text == source_text[start:end] must always hold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.score">
+<span class="sig-name descname"><span class="pre">score</span></span></dt>
+<dd><p>Confidence score in [0.0, 1.0].
+Regex detections are always 1.0 (deterministic).
+NER detections carry the model’s confidence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.detector">
+<span class="sig-name descname"><span class="pre">detector</span></span></dt>
+<dd><p>Name of the detector that produced this entity,
+for traceability and conflict resolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.Entity.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span></dt>
+<dd><p>Arbitrary extra data (e.g. regex group name,
+normalised value, spaCy entity type).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="maskme.ner.Entity.contains">
+<span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/maskme/ner/base.html#Entity.contains"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Return True if this entity’s span fully contains another’s.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">detector</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#maskme.ner.EntityLabel" title="maskme.ner.base.EntityLabel"><span class="pre">EntityLabel</span></a></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">metadata</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="maskme.ner.Entity.overlaps">
+<span class="sig-name descname"><span class="pre">overlaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/maskme/ner/base.html#Entity.overlaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Return True if this entity’s span overlaps with another’s.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">text</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">EntityLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/maskme/ner/base.html#EntityLabel"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Entity labels produced by the spaCy NER detector.</p>
+<p>Using an enum prevents label drift between detectors. All detectors
+must map their internal labels to these values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel.DATE">
+<span class="sig-name descname"><span class="pre">DATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DATE'</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel.LOCATION">
+<span class="sig-name descname"><span class="pre">LOCATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LOCATION'</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel.ORGANISATION">
+<span class="sig-name descname"><span class="pre">ORGANISATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ORGANISATION'</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel.PERSON">
+<span class="sig-name descname"><span class="pre">PERSON</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PERSON'</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.EntityLabel.TIME">
+<span class="sig-name descname"><span class="pre">TIME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'TIME'</span></span></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">PipelineResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">output:</span> <span class="pre">str,</span> <span class="pre">input:</span> <span class="pre">str,</span> <span class="pre">entities:</span> <span class="pre">~typing.List[~maskme.ner.base.Entity],</span> <span class="pre">language:</span> <span class="pre">str,</span> <span class="pre">stats:</span> <span class="pre">~typing.Dict[str,</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/maskme/ner/pipeline.html#PipelineResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Output of a single <a class="reference internal" href="#maskme.ner.mask" title="maskme.ner.mask"><code class="xref py py-func docutils literal notranslate"><span class="pre">mask()</span></code></a> call.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.output">
+<span class="sig-name descname"><span class="pre">output</span></span></dt>
+<dd><p>Text with all detected entities replaced by tags
+(e.g. <code class="docutils literal notranslate"><span class="pre">[PERSON]</span></code>, <code class="docutils literal notranslate"><span class="pre">[LOCATION]</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.input">
+<span class="sig-name descname"><span class="pre">input</span></span></dt>
+<dd><p>Original input text.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.entities">
+<span class="sig-name descname"><span class="pre">entities</span></span></dt>
+<dd><p>Non-overlapping entities after span resolution,
+sorted by start offset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity">maskme.ner.base.Entity</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.language">
+<span class="sig-name descname"><span class="pre">language</span></span></dt>
+<dd><p>Detected or overridden language code (<code class="docutils literal notranslate"><span class="pre">"fr"</span></code> / <code class="docutils literal notranslate"><span class="pre">"en"</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.stats">
+<span class="sig-name descname"><span class="pre">stats</span></span></dt>
+<dd><p>Processing metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.as_dict">
+<span class="sig-name descname"><span class="pre">as_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/maskme/ner/pipeline.html#PipelineResult.as_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">entities</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a><span class="p"><span class="pre">]</span></span></span></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.entity_count">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">entity_count</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">input</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="maskme.ner.PipelineResult.labels_found">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">labels_found</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">language</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">output</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">stats</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="maskme.ner.mask">
+<span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#maskme.ner.PipelineResult" title="maskme.ner.pipeline.PipelineResult"><span class="pre">PipelineResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#maskme.ner.PipelineResult" title="maskme.ner.pipeline.PipelineResult"><span class="pre">PipelineResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/maskme/ner/pipeline.html#mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Detect and replace PII in text with anonymized tags (<code class="docutils literal notranslate"><span class="pre">[PERSON]</span></code>, etc.).</p>
+<p>This is the <strong>single entry point</strong> to the NER module. Pass a string
+for single-text processing or a list of strings for batch processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> – Text string or list of text strings to mask.</p></li>
+<li><p><strong>language</strong> – Language override (<code class="docutils literal notranslate"><span class="pre">"fr"</span></code> / <code class="docutils literal notranslate"><span class="pre">"en"</span></code>).
+Auto-detected if <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">PipelineResult</span></code> if <code class="docutils literal notranslate"><span class="pre">text</span></code> is a single string.
+<code class="docutils literal notranslate"><span class="pre">List[PipelineResult]</span></code> if <code class="docutils literal notranslate"><span class="pre">text</span></code> is a list.</p>
+</dd>
+</dl>
+<p>Simple usage:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">maskme.ner</span><span class="w"> </span><span class="kn">import</span> <span class="n">mask</span>
+</span><span id="line-2"><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">mask</span><span class="p">(</span><span class="s2">"Alice habite à Paris."</span><span class="p">)</span>
+</span><span id="line-3"><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">output</span>
+</span><span id="line-4"><span class="go">'[PERSON] habite à [LOCATION].'</span>
+</span></code></pre></div>
+</div>
+<p>Batch:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">mask</span><span class="p">([</span><span class="s2">"Alice habite à Paris."</span><span class="p">,</span> <span class="s2">"John lives in London."</span><span class="p">])</span>
+</span><span id="line-2"><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+</span><span id="line-3"><span class="go">['[PERSON] habite à [LOCATION].', '[PERSON] lives in [LOCATION].']</span>
+</span></code></pre></div>
+</div>
+<p>Language hint:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">mask</span><span class="p">(</span><span class="s2">"John lives in London."</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">output</span>
+</span><span id="line-2"><span class="go">'[PERSON] lives in [LOCATION].'</span>
+</span></code></pre></div>
+</div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="maskme.ner.resolve_spans">
+<span class="sig-prename descclassname"><span class="pre">maskme.ner.</span></span><span class="sig-name descname"><span class="pre">resolve_spans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#maskme.ner.Entity" title="maskme.ner.base.Entity"><span class="pre">Entity</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/maskme/ner/base.html#resolve_spans"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Resolve overlapping entity spans from multiple detectors.</p>
+<dl class="simple">
+<dt>Resolution rules (applied in order):</dt><dd><ol class="arabic simple">
+<li><p>Longer span wins over shorter span (more context = more precise).</p></li>
+<li><p>Higher detector priority wins when spans have equal length.</p></li>
+<li><p>Higher confidence score breaks remaining ties.</p></li>
+</ol>
+</dd>
+</dl>
+<p>The result is a set of non-overlapping entities sorted by start offset,
+ready to be passed to masker.py for text reconstruction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entities</strong> – Raw entity list, potentially with overlapping spans.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Deduplicated, non-overlapping list of Entity objects sorted by
+their start position in the source text.</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="cli-usage">
+<h2>CLI Usage</h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme ner [OPTIONS] [INPUT]
+</span></code></pre></div>
+</div>
+<p><strong>Arguments:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">INPUT</span></code> — Path to a text file. If omitted, reads from stdin.</p></li>
+</ul>
+<p><strong>Options:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-o,</span> <span class="pre">--output</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Output file path (default: stdout)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-l,</span> <span class="pre">--language</span> <span class="pre">TEXT</span></code></p></td>
+<td><p>Language override (<code class="docutils literal notranslate"><span class="pre">fr</span></code> or <code class="docutils literal notranslate"><span class="pre">en</span></code>); auto-detected if omitted</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--lines</span></code></p></td>
+<td><p>Treat each line as a separate text (batch mode)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code></p></td>
+<td><p>Enable debug logging</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="entity-labels">
+<h2>Entity Labels</h2>
+<p>The following entity types are detected and replaced with bracketed tags:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Label</p></th>
+<th class="head"><p>Tag</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PERSON</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[PERSON]</span></code></p></td>
+<td><p>People names</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LOCATION</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[LOCATION]</span></code></p></td>
+<td><p>Cities, countries, addresses</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ORGANISATION</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[ORGANISATION]</span></code></p></td>
+<td><p>Companies, hospitals, organizations</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DATE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[DATE]</span></code></p></td>
+<td><p>Absolute or relative dates</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TIME</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[TIME]</span></code></p></td>
+<td><p>Times of day</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="graceful-degradation">
+<h2>Graceful Degradation</h2>
+<p>If spaCy is not installed, the module logs a warning and returns the original text
+unchanged. This allows code using the NER module to run without the optional
+dependency in environments where text anonymization is not required.</p>
+</section>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#installation'" class="reference internal" href="#installation">Installation</a></li>
+<li><a :data-current="activeSection === '#module-maskme.ner'" class="reference internal" href="#module-maskme.ner">API Reference</a><ul>
+<li><a :data-current="activeSection === '#maskme-ner'" class="reference internal" href="#maskme-ner">maskme.ner</a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Detector'" class="reference internal" href="#maskme.ner.Detector"><code class="docutils literal notranslate"><span class="pre">Detector</span></code></a><ul>
+<li><a :data-current="activeSection === '#maskme.ner.Detector.detect'" class="reference internal" href="#maskme.ner.Detector.detect"><code class="docutils literal notranslate"><span class="pre">Detector.detect()</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Detector.name'" class="reference internal" href="#maskme.ner.Detector.name"><code class="docutils literal notranslate"><span class="pre">Detector.name</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Detector.priority'" class="reference internal" href="#maskme.ner.Detector.priority"><code class="docutils literal notranslate"><span class="pre">Detector.priority</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity'" class="reference internal" href="#maskme.ner.Entity"><code class="docutils literal notranslate"><span class="pre">Entity</span></code></a><ul>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.text'" class="reference internal" href="#maskme.ner.Entity.text"><code class="docutils literal notranslate"><span class="pre">Entity.text</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.label'" class="reference internal" href="#maskme.ner.Entity.label"><code class="docutils literal notranslate"><span class="pre">Entity.label</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.start'" class="reference internal" href="#maskme.ner.Entity.start"><code class="docutils literal notranslate"><span class="pre">Entity.start</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.end'" class="reference internal" href="#maskme.ner.Entity.end"><code class="docutils literal notranslate"><span class="pre">Entity.end</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.score'" class="reference internal" href="#maskme.ner.Entity.score"><code class="docutils literal notranslate"><span class="pre">Entity.score</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.detector'" class="reference internal" href="#maskme.ner.Entity.detector"><code class="docutils literal notranslate"><span class="pre">Entity.detector</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.metadata'" class="reference internal" href="#maskme.ner.Entity.metadata"><code class="docutils literal notranslate"><span class="pre">Entity.metadata</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.contains'" class="reference internal" href="#maskme.ner.Entity.contains"><code class="docutils literal notranslate"><span class="pre">Entity.contains()</span></code></a></li>
+<li><a :data-current="activeSection === '#id0'" class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">Entity.detector</span></code></a></li>
+<li><a :data-current="activeSection === '#id3'" class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">Entity.end</span></code></a></li>
+<li><a :data-current="activeSection === '#id4'" class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">Entity.label</span></code></a></li>
+<li><a :data-current="activeSection === '#id5'" class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">Entity.metadata</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.Entity.overlaps'" class="reference internal" href="#maskme.ner.Entity.overlaps"><code class="docutils literal notranslate"><span class="pre">Entity.overlaps()</span></code></a></li>
+<li><a :data-current="activeSection === '#id6'" class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">Entity.score</span></code></a></li>
+<li><a :data-current="activeSection === '#id7'" class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">Entity.start</span></code></a></li>
+<li><a :data-current="activeSection === '#id8'" class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">Entity.text</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel'" class="reference internal" href="#maskme.ner.EntityLabel"><code class="docutils literal notranslate"><span class="pre">EntityLabel</span></code></a><ul>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel.DATE'" class="reference internal" href="#maskme.ner.EntityLabel.DATE"><code class="docutils literal notranslate"><span class="pre">EntityLabel.DATE</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel.LOCATION'" class="reference internal" href="#maskme.ner.EntityLabel.LOCATION"><code class="docutils literal notranslate"><span class="pre">EntityLabel.LOCATION</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel.ORGANISATION'" class="reference internal" href="#maskme.ner.EntityLabel.ORGANISATION"><code class="docutils literal notranslate"><span class="pre">EntityLabel.ORGANISATION</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel.PERSON'" class="reference internal" href="#maskme.ner.EntityLabel.PERSON"><code class="docutils literal notranslate"><span class="pre">EntityLabel.PERSON</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.EntityLabel.TIME'" class="reference internal" href="#maskme.ner.EntityLabel.TIME"><code class="docutils literal notranslate"><span class="pre">EntityLabel.TIME</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult'" class="reference internal" href="#maskme.ner.PipelineResult"><code class="docutils literal notranslate"><span class="pre">PipelineResult</span></code></a><ul>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.output'" class="reference internal" href="#maskme.ner.PipelineResult.output"><code class="docutils literal notranslate"><span class="pre">PipelineResult.output</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.input'" class="reference internal" href="#maskme.ner.PipelineResult.input"><code class="docutils literal notranslate"><span class="pre">PipelineResult.input</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.entities'" class="reference internal" href="#maskme.ner.PipelineResult.entities"><code class="docutils literal notranslate"><span class="pre">PipelineResult.entities</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.language'" class="reference internal" href="#maskme.ner.PipelineResult.language"><code class="docutils literal notranslate"><span class="pre">PipelineResult.language</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.stats'" class="reference internal" href="#maskme.ner.PipelineResult.stats"><code class="docutils literal notranslate"><span class="pre">PipelineResult.stats</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.as_dict'" class="reference internal" href="#maskme.ner.PipelineResult.as_dict"><code class="docutils literal notranslate"><span class="pre">PipelineResult.as_dict()</span></code></a></li>
+<li><a :data-current="activeSection === '#id9'" class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">PipelineResult.entities</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.entity_count'" class="reference internal" href="#maskme.ner.PipelineResult.entity_count"><code class="docutils literal notranslate"><span class="pre">PipelineResult.entity_count</span></code></a></li>
+<li><a :data-current="activeSection === '#id10'" class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">PipelineResult.input</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.PipelineResult.labels_found'" class="reference internal" href="#maskme.ner.PipelineResult.labels_found"><code class="docutils literal notranslate"><span class="pre">PipelineResult.labels_found</span></code></a></li>
+<li><a :data-current="activeSection === '#id11'" class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">PipelineResult.language</span></code></a></li>
+<li><a :data-current="activeSection === '#id12'" class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">PipelineResult.output</span></code></a></li>
+<li><a :data-current="activeSection === '#id13'" class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">PipelineResult.stats</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#maskme.ner.mask'" class="reference internal" href="#maskme.ner.mask"><code class="docutils literal notranslate"><span class="pre">mask()</span></code></a></li>
+<li><a :data-current="activeSection === '#maskme.ner.resolve_spans'" class="reference internal" href="#maskme.ner.resolve_spans"><code class="docutils literal notranslate"><span class="pre">resolve_spans()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#cli-usage'" class="reference internal" href="#cli-usage">CLI Usage</a></li>
+<li><a :data-current="activeSection === '#entity-labels'" class="reference internal" href="#entity-labels">Entity Labels</a></li>
+<li><a :data-current="activeSection === '#graceful-degradation'" class="reference internal" href="#graceful-degradation">Graceful Degradation</a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2026, MIT License - Lucien KIEMDE - Code with purpose. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.1.0</a></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=01f34227"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script defer="defer" src="../_static/theme.js?v=d6a9845b"></script>
+</body>
+</html>

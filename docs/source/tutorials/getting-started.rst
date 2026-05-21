@@ -811,7 +811,157 @@ Part 3: Measuring Privacy and Utility
 ====================================
 
 
-Part 4: Real-World Example
+Part 4: Anonymizing Unstructured Text with NER
+===============================================
+
+So far we've worked with **structured data** (tabular records). But what about **unstructured text** — patient notes, emails, support tickets, or any free-form text containing names, locations, or dates?
+
+MaskMe's NER module detects and replaces personally identifiable information in free text using Named Entity Recognition (spaCy).
+
+Installation
+~~~~~~~~~~~~
+
+The NER module requires extra dependencies:
+
+.. code-block:: bash
+
+   pip install maskme[ner]
+   python -m spacy download en_core_web_lg
+   python -m spacy download fr_core_news_lg
+
+MaskMe auto-detects French (``fr``) and English (``en``). Install only the language(s) you need.
+
+Using the CLI
+~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   maskme ner document.txt -o document_anon.txt
+
+**Example** (``report.txt``):
+
+.. code-block:: text
+
+   Le Dr. Martin a diagnostiqué Alice Johnson le 12 janvier 2024
+   à l'Hôpital Saint-Louis à Paris. Le traitement commence à 14h30.
+
+Run:
+
+.. code-block:: bash
+
+   maskme ner report.txt -l fr -o report_anon.txt
+
+**Output** (``report_anon.txt``):
+
+.. code-block:: text
+
+   Le [PERSON] a diagnostiqué [PERSON] le [DATE]
+   à l'[ORGANISATION] à [LOCATION]. Le traitement commence à [TIME].
+
+Key CLI options:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Option
+     - Description
+   * - ``-o, --output``
+     - Output file path (stdout if omitted)
+   * - ``-l, --language``
+     - Language override (``fr`` or ``en``); auto-detected if omitted
+   * - ``--lines``
+     - Process each line as a separate text (batch mode)
+   * - ``--verbose``
+     - Enable debug logging
+
+**Line-by-line mode** is useful when each line is a separate record:
+
+.. code-block:: bash
+
+   maskme ner patients.txt --lines -o patients_anon.txt
+
+Using Python API
+~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from maskme.ner import mask
+
+   # Single text → returns a PipelineResult
+   result = mask("Alice habite à Paris.")
+   print(result.output)
+   # → '[PERSON] habite à [LOCATION].'
+
+   print(result.entities)
+   # → [Entity(text='Alice', label=<EntityLabel.PERSON: 'PERSON'>, ...),
+   #     Entity(text='Paris', label=<EntityLabel.LOCATION: 'LOCATION'>, ...)]
+
+   print(result.language)
+   # → 'fr'
+
+   # Batch processing → returns a list of PipelineResult
+   results = mask([
+       "Alice habite à Paris.",
+       "John lives in London.",
+   ])
+   for r in results:
+       print(f"[{r.language}] {r.output}")
+   # → [fr] [PERSON] habite à [LOCATION].
+   # → [en] [PERSON] lives in [LOCATION].
+
+   # Language hint (skip auto-detection)
+   result = mask("Dr. Smith works at General Hospital.", language="en")
+   print(result.output)
+   # → '[PERSON] works at [ORGANISATION].'
+
+Anonymization tags
+~~~~~~~~~~~~~~~~~~
+
+Detected entity types are replaced with bracketed tags:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Entity Label
+     - Tag
+     - Example
+   * - PERSON
+     - ``[PERSON]``
+     - Names, doctors, patients
+   * - LOCATION
+     - ``[LOCATION]``
+     - Cities, countries, addresses
+   * - ORGANISATION
+     - ``[ORGANISATION]``
+     - Hospitals, companies
+   * - DATE
+     - ``[DATE]``
+     - Full dates, "12 janvier 2024"
+   * - TIME
+     - ``[TIME]``
+     - Times, "14h30"
+
+Python API reference
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   result = mask("Alice habite à Paris.")
+
+   result.output        # Tagged text
+   result.input         # Original text
+   result.entities      # List of detected Entity objects
+   result.language      # Detected language
+   result.entity_count  # Number of entities masked
+   result.labels_found # Deduplicated, sorted entity labels
+   result.stats         # Processing metadata (timing, detectors)
+   result.as_dict()     # Serialize everything to a dict
+
+.. note::
+
+   Without spaCy installed, the module degrades gracefully: ``mask()`` returns the original text unchanged and logs a warning with install instructions.
+
+Part 5: Real-World Example
 ===========================
 
 Let's put it all together with a realistic scenario:
@@ -858,13 +1008,14 @@ Let's put it all together with a realistic scenario:
 
 
 Next Steps
-==========
+=========
 
 Now that you understand the basics:
 
 - **Need to build a custom strategy?** See :doc:`../how-to/custom-strategy`
 - **Want to know more about each strategy?** See :doc:`../reference/strategies`
 - **Building an application with MaskMe?** See :doc:`../reference/api`
+- **Anonymizing unstructured text?** See :doc:`../reference/ner`
 - **Curious about the architecture?** See :doc:`../explanation/architecture`
 
 Tips for Success

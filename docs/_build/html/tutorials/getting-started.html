@@ -132,7 +132,7 @@
 </span></code></pre></div>
 </div>
 <p>Verify the installation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>--help
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>--version
 </span></code></pre></div>
 </div>
 </section>
@@ -219,7 +219,44 @@
 <section id="part-2-understanding-strategies">
 <h1>Part 2: Understanding Strategies</h1>
 <p>MaskMe provides six strategies. Each solves different privacy vs. utility trade-offs. Let’s explore when to use each.</p>
-<p><strong>Keeps the original value unchanged.</strong></p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Strategy Overview</span></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Strategy</p></th>
+<th class="head"><p>What It Does</p></th>
+<th class="head"><p>Best For</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Keep</p></td>
+<td><p>Preserves original value unchanged</p></td>
+<td><p>Non-sensitive fields, public data</p></td>
+</tr>
+<tr class="row-odd"><td><p>Drop</p></td>
+<td><p>Removes field entirely</p></td>
+<td><p>Direct identifiers (PII)</p></td>
+</tr>
+<tr class="row-even"><td><p>Hash</p></td>
+<td><p>One-way cryptographic digest</p></td>
+<td><p>Consistent linking without revealing values</p></td>
+</tr>
+<tr class="row-odd"><td><p>Redact</p></td>
+<td><p>Replaces characters with placeholders</p></td>
+<td><p>Partial visibility (e.g., last 4 digits)</p></td>
+</tr>
+<tr class="row-even"><td><p>Noise</p></td>
+<td><p>Adds statistical noise to numeric values</p></td>
+<td><p>Numeric data with preserved distributions</p></td>
+</tr>
+<tr class="row-odd"><td><p>Generalize</p></td>
+<td><p>Coarsens data into broader categories</p></td>
+<td><p>Ages, dates, locations</p></td>
+</tr>
+</tbody>
+</table>
+<hr class="docutils"/>
+<p class="rubric">Keep</p>
+<p>The <strong>Keep</strong> strategy keeps the original value unchanged.</p>
 <p>Use when: The field is already public, non-sensitive, or represent key analytical dimensions.</p>
 <p>Example: Geographic region, product category, or timestamp.</p>
 <p>In rules file:</p>
@@ -240,10 +277,12 @@
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"region"</span><span class="p">:</span><span class="w"> </span><span class="s2">"US-West"</span><span class="p">,</span>
 </span><span id="line-3"><span class="w">  </span><span class="nt">"category"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Electronics"</span>
-</span><span id="line-4"><span class="p">}</span>
+</span><span id="line-4"><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Removes the field entirely.</strong></p>
+<hr class="docutils"/>
+<p class="rubric">Drop</p>
+<p>The <strong>Drop</strong> strategy removes the field entirely.</p>
 <p>Use when: The field is a direct identifier (PII) that could lead to re-identification, or if the field is unnecessary for the final dataset.</p>
 <p>Example: Names, email addresses, phone numbers, social security numbers.</p>
 <p>In rules file:</p>
@@ -264,10 +303,12 @@
 <p><strong>Output data:</strong></p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"john@example.com"</span>
-</span><span id="line-3"><span class="p">}</span>
+</span><span id="line-3"><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Converts the value into a fixed-length hexadecimal digest.</strong></p>
+<hr class="docutils"/>
+<p class="rubric">Hash</p>
+<p>The <strong>Hash</strong> strategy converts the value into a fixed-length hexadecimal digest.</p>
 <p>Use when: You need a consistent, one-way transformation (cannot be reversed).</p>
 <p>Common use: Email addresses, usernames, customer IDs when consistency matters for record linking.</p>
 <p><strong>Parameters:</strong></p>
@@ -310,7 +351,9 @@
 <p class="admonition-title">Note</p>
 <p>Same input + same salt = same output. This is useful for linking records across datasets.</p>
 </div>
-<p><strong>Replaces characters with a placeholder, preserving length.</strong></p>
+<hr class="docutils"/>
+<p class="rubric">Redact</p>
+<p>The <strong>Redact</strong> strategy replaces characters with a placeholder, preserving length.</p>
 <p>Use when: You need some visible information (like last 4 digits) while hiding the rest.</p>
 <p>Common use: Phone numbers, credit cards, partially-visible IDs.</p>
 <p><strong>Parameters:</strong></p>
@@ -352,21 +395,72 @@
 <p><strong>Output data:</strong></p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"phone"</span><span class="p">:</span><span class="w"> </span><span class="s2">"****0101"</span><span class="p">,</span>
-</span><span id="line-3"><span class="w">  </span><span class="nt">"credit_card"</span><span class="p">:</span><span class="w"> </span><span class="s2">"XXXXXXXXXXXX90"</span><span class="p">,</span>
-</span><span id="line-4"><span class="w">  </span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a*****m.com"</span><span class="p">,</span>
+</span><span id="line-3"><span class="w">  </span><span class="nt">"credit_card"</span><span class="p">:</span><span class="w"> </span><span class="s2">"XXXXXXXXXXXX7890"</span><span class="p">,</span>
+</span><span id="line-4"><span class="w">  </span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a*******com"</span><span class="p">,</span>
 </span><span id="line-5"><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"********"</span>
-</span><span id="line-6"><span class="p">}</span>
+</span><span id="line-6"><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Adds statistical noise to numeric values.</strong></p>
+<hr class="docutils"/>
+<p class="rubric">Noise</p>
+<p>The <strong>Noise</strong> strategy adds statistical noise to numeric values.</p>
 <p>Use when: You need to keep numbers but make individual values unrecognizable while preserving statistical distributions.</p>
 <p>Common use: Ages, salaries, purchase amounts, measurements.</p>
-<p><strong>Two modes:</strong></p>
-<ol class="arabic simple">
-<li><p><strong>Direct sigma</strong> — Simple noise with fixed standard deviation</p></li>
-<li><p><strong>Differential Privacy</strong> — Noise calibrated for formal privacy guarantees</p></li>
-</ol>
-<p><strong>Direct Sigma Mode (simpler):</strong></p>
+<p><strong>Two modes — which one for you?</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Mode</p></th>
+<th class="head"><p>Pick this when…</p></th>
+<th class="head"><p>You must provide</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Direct sigma</p></td>
+<td><p>You want simple, predictable noise. No formal privacy guarantees needed.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sigma</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Differential Privacy</p></td>
+<td><p>You need a formal, provable privacy guarantee (HIPAA, research, regulation).</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">epsilon</span></code> + <code class="docutils literal notranslate"><span class="pre">sensitivity</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Direct sigma — picking sigma</strong></p>
+<p>Adds Gaussian noise with standard deviation <code class="docutils literal notranslate"><span class="pre">sigma</span></code>. About 68% of outputs land within ±sigma of the true value, 95% within ±2×sigma.</p>
+<p>Pick <code class="docutils literal notranslate"><span class="pre">sigma</span></code> relative to your data’s scale:</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Rule of thumb</span></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Typical range</p></th>
+<th class="head"><p>Suggested sigma</p></th>
+<th class="head"><p>Effect</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Age</p></td>
+<td><p>0–100</p></td>
+<td><p>2–5</p></td>
+<td><p>Most values shift ±2–5 years</p></td>
+</tr>
+<tr class="row-odd"><td><p>Salary</p></td>
+<td><p>$30k–$200k</p></td>
+<td><p>5k–10k</p></td>
+<td><p>Most shift ±$5k–$10k</p></td>
+</tr>
+<tr class="row-even"><td><p>Rating (1–5)</p></td>
+<td><p>1–5</p></td>
+<td><p>0.5–1</p></td>
+<td><p>Most shift ±0.5–1 stars</p></td>
+</tr>
+<tr class="row-odd"><td><p>Purchase count</p></td>
+<td><p>0–1,000</p></td>
+<td><p>50–100</p></td>
+<td><p>Most shift ±50–100</p></td>
+</tr>
+</tbody>
+</table>
+<p>Start at the low end, check if the noise is sufficient for your use case, and increase if needed.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"age"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 </span><span id="line-3"><span class="w">    </span><span class="nt">"strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"noise"</span><span class="p">,</span>
@@ -384,7 +478,41 @@
 </span><span id="line-15"><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Differential Privacy Mode (stronger):</strong></p>
+<p><strong>Differential Privacy — picking epsilon</strong></p>
+<p>Noise is calibrated from <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> (privacy budget). <strong>Smaller epsilon = stronger privacy = more noise.</strong></p>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Epsilon cheat sheet</span></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Epsilon</p></th>
+<th class="head"><p>Privacy</p></th>
+<th class="head"><p>When to use</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.1 – 0.5</p></td>
+<td><p>High</p></td>
+<td><p>Medical records, financial data, strict compliance</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.5 – 2.0</p></td>
+<td><p>Moderate</p></td>
+<td><p>Most business &amp; research datasets</p></td>
+</tr>
+<tr class="row-even"><td><p>2.0 – 10</p></td>
+<td><p>Low</p></td>
+<td><p>Non-sensitive analytics, aggregate stats</p></td>
+</tr>
+<tr class="row-odd"><td><p>&gt; 10</p></td>
+<td><p>Minimal</p></td>
+<td><p>Rarely useful — little privacy left</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Picking sensitivity</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">sensitivity</span></code> = the maximum possible change one person’s data can cause.</p>
+<p>The safe formula: <strong>sensitivity = max_value − min_value</strong> for the field.</p>
+<p>If you clamp salaries to $30k–$200k with <code class="docutils literal notranslate"><span class="pre">min_val</span></code> / <code class="docutils literal notranslate"><span class="pre">max_val</span></code>, set <code class="docutils literal notranslate"><span class="pre">sensitivity</span></code> to 170k. This way the DP noise is proportional to your actual data range.</p>
+<p><strong>Picking delta</strong></p>
+<p>Standard default: <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> (1 in 100,000 chance of privacy breach). Or set it to <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">number_of_records</span></code>.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"salary"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 </span><span id="line-3"><span class="w">    </span><span class="nt">"strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"noise"</span><span class="p">,</span>
@@ -398,17 +526,58 @@
 </span><span id="line-11"><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Parameters explained:</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sigma</span></code>: Standard deviation of noise. Larger = more noise = more privacy.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">seed</span></code>: Optional. Use the same seed to reproduce identical noise (useful for consistent anonymization across datasets).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">min_val</span></code>: Minimum value after noise (clip lower bound).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">max_val</span></code>: Maximum value after noise (clip upper bound).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">precision</span></code>: Round to N decimal places (0 = integer).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">epsilon</span></code>: Privacy budget (smaller = stronger privacy).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sensitivity</span></code>: Maximum change in output when one person’s data changes.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delta</span></code>: Probability of privacy breach (default: 1e-5).</p></li>
-</ul>
+<p><strong>All parameters quick reference</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>What it does</p></th>
+<th class="head"><p>How to choose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sigma</span></code></p></td>
+<td><p>Direct</p></td>
+<td><p>Std dev of noise</p></td>
+<td><p>~5–10% of data range</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">epsilon</span></code></p></td>
+<td><p>DP</p></td>
+<td><p>Privacy budget</p></td>
+<td><p>0.1–0.5 (high), 0.5–2 (moderate), 2–10 (low)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sensitivity</span></code></p></td>
+<td><p>DP</p></td>
+<td><p>Max possible change</p></td>
+<td><p>max − min of your field</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">delta</span></code></p></td>
+<td><p>DP</p></td>
+<td><p>Failure probability</p></td>
+<td><p>1e-5 (default)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">min_val</span></code></p></td>
+<td><p>Both</p></td>
+<td><p>Lower clip bound</p></td>
+<td><p>Realistic minimum</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>Both</p></td>
+<td><p>Upper clip bound</p></td>
+<td><p>Realistic maximum</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">precision</span></code></p></td>
+<td><p>Both</p></td>
+<td><p>Decimal places</p></td>
+<td><p>0 for integers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">seed</span></code></p></td>
+<td><p>Both</p></td>
+<td><p>Reproducible noise</p></td>
+<td><p>Any string; same seed = same noise</p></td>
+</tr>
+</tbody>
+</table>
 <p><strong>Example 1: Direct Sigma Mode</strong></p>
 <p><em>Rules:</em></p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
@@ -462,10 +631,12 @@
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"salary"</span><span class="p">:</span><span class="w"> </span><span class="mi">98234</span><span class="p">,</span>
 </span><span id="line-3"><span class="w">  </span><span class="nt">"dept"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Engineering"</span>
-</span><span id="line-4"><span class="p">}</span>
+</span><span id="line-4"><span class="w">  </span><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p><strong>Coarsens data to broader categories.</strong></p>
+<hr class="docutils"/>
+<p class="rubric">Generalize</p>
+<p>The <strong>Generalize</strong> strategy coarsens data to broader categories.</p>
 <p>Use when: You want to keep the type of information but remove specificity.</p>
 <p>Common use: Dates (year only), locations (state instead of city), ages (brackets).</p>
 <p><strong>For numeric data (ages, scores, amounts):</strong></p>
@@ -609,9 +780,10 @@
 <p><em>Output data:</em></p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
 </span><span id="line-2"><span class="w">  </span><span class="nt">"full_address"</span><span class="p">:</span><span class="w"> </span><span class="s2">"USA,Home"</span>
-</span><span id="line-3"><span class="p">}</span>
+</span><span id="line-3"><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 </div>
+<hr class="docutils"/>
 <p><strong>Privacy regulations like HIPAA require a structured approach to data anonymization:</strong></p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">STEP 1: Remove Direct Identifiers (HIPAA Requirement)
 </span><span id="line-2">├─ Is it a direct identifier? (name, SSN, medical record ID, etc.)

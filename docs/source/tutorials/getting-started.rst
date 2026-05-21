@@ -23,7 +23,7 @@ Verify the installation:
 
 .. code-block:: bash
 
-   maskme --help
+   maskme --version
 
 Part 1: Your First Anonymization
 =================================
@@ -130,10 +130,36 @@ Part 2: Understanding Strategies
 
 MaskMe provides six strategies. Each solves different privacy vs. utility trade-offs. Let's explore when to use each.
 
-Strategy: Keep
-~~~~~~~~~~~~~~
+.. list-table:: Strategy Overview
+   :header-rows: 1
 
-**Keeps the original value unchanged.**
+   * - Strategy
+     - What It Does
+     - Best For
+   * - Keep
+     - Preserves original value unchanged
+     - Non-sensitive fields, public data
+   * - Drop
+     - Removes field entirely
+     - Direct identifiers (PII)
+   * - Hash
+     - One-way cryptographic digest
+     - Consistent linking without revealing values
+   * - Redact
+     - Replaces characters with placeholders
+     - Partial visibility (e.g., last 4 digits)
+   * - Noise
+     - Adds statistical noise to numeric values
+     - Numeric data with preserved distributions
+   * - Generalize
+     - Coarsens data into broader categories
+     - Ages, dates, locations
+
+----
+
+.. rubric:: Keep
+
+The **Keep** strategy keeps the original value unchanged.
 
 Use when: The field is already public, non-sensitive, or represent key analytical dimensions.
 
@@ -164,12 +190,13 @@ In rules file:
    {
      "region": "US-West",
      "category": "Electronics"
-   }
+    }
 
-Strategy: Drop
-~~~~~~~~~~~~~~
+----
 
-**Removes the field entirely.**
+.. rubric:: Drop
+
+The **Drop** strategy removes the field entirely.
 
 Use when: The field is a direct identifier (PII) that could lead to re-identification, or if the field is unnecessary for the final dataset.
 
@@ -200,12 +227,13 @@ In rules file:
 
    {
      "email": "john@example.com"
-   }
+    }
 
-Strategy: Hash
-~~~~~~~~~~~~~~
+----
 
-**Converts the value into a fixed-length hexadecimal digest.**
+.. rubric:: Hash
+
+The **Hash** strategy converts the value into a fixed-length hexadecimal digest.
 
 Use when: You need a consistent, one-way transformation (cannot be reversed).
 
@@ -257,10 +285,11 @@ Common use: Email addresses, usernames, customer IDs when consistency matters fo
 
    Same input + same salt = same output. This is useful for linking records across datasets.
 
-Strategy: Redact
-~~~~~~~~~~~~~~~~
+----
 
-**Replaces characters with a placeholder, preserving length.**
+.. rubric:: Redact
+
+The **Redact** strategy replaces characters with a placeholder, preserving length.
 
 Use when: You need some visible information (like last 4 digits) while hiding the rest.
 
@@ -312,26 +341,67 @@ Common use: Phone numbers, credit cards, partially-visible IDs.
 
    {
      "phone": "****0101",
-     "credit_card": "XXXXXXXXXXXX90",
-     "email": "a*****m.com",
+     "credit_card": "XXXXXXXXXXXX7890",
+     "email": "a*******com",
      "name": "********"
-   }
+    }
 
-Strategy: Noise
-~~~~~~~~~~~~~~~
+----
 
-**Adds statistical noise to numeric values.**
+.. rubric:: Noise
+
+The **Noise** strategy adds statistical noise to numeric values.
 
 Use when: You need to keep numbers but make individual values unrecognizable while preserving statistical distributions.
 
 Common use: Ages, salaries, purchase amounts, measurements.
 
-**Two modes:**
+**Two modes — which one for you?**
 
-1. **Direct sigma** — Simple noise with fixed standard deviation
-2. **Differential Privacy** — Noise calibrated for formal privacy guarantees
+.. list-table::
+   :header-rows: 1
 
-**Direct Sigma Mode (simpler):**
+   * - Mode
+     - Pick this when…
+     - You must provide
+   * - Direct sigma
+     - You want simple, predictable noise. No formal privacy guarantees needed.
+     - ``sigma``
+   * - Differential Privacy
+     - You need a formal, provable privacy guarantee (HIPAA, research, regulation).
+     - ``epsilon`` + ``sensitivity``
+
+**Direct sigma — picking sigma**
+
+Adds Gaussian noise with standard deviation ``sigma``. About 68% of outputs land within ±sigma of the true value, 95% within ±2×sigma.
+
+Pick ``sigma`` relative to your data's scale:
+
+.. list-table:: Rule of thumb
+   :header-rows: 1
+
+   * - Field
+     - Typical range
+     - Suggested sigma
+     - Effect
+   * - Age
+     - 0–100
+     - 2–5
+     - Most values shift ±2–5 years
+   * - Salary
+     - $30k–$200k
+     - 5k–10k
+     - Most shift ±$5k–$10k
+   * - Rating (1–5)
+     - 1–5
+     - 0.5–1
+     - Most shift ±0.5–1 stars
+   * - Purchase count
+     - 0–1,000
+     - 50–100
+     - Most shift ±50–100
+
+Start at the low end, check if the noise is sufficient for your use case, and increase if needed.
 
 .. code-block:: json
 
@@ -351,7 +421,40 @@ Common use: Ages, salaries, purchase amounts, measurements.
      }
    }
 
-**Differential Privacy Mode (stronger):**
+**Differential Privacy — picking epsilon**
+
+Noise is calibrated from ``epsilon`` (privacy budget). **Smaller epsilon = stronger privacy = more noise.**
+
+.. list-table:: Epsilon cheat sheet
+   :header-rows: 1
+
+   * - Epsilon
+     - Privacy
+     - When to use
+   * - 0.1 – 0.5
+     - High
+     - Medical records, financial data, strict compliance
+   * - 0.5 – 2.0
+     - Moderate
+     - Most business & research datasets
+   * - 2.0 – 10
+     - Low
+     - Non-sensitive analytics, aggregate stats
+   * - > 10
+     - Minimal
+     - Rarely useful — little privacy left
+
+**Picking sensitivity**
+
+``sensitivity`` = the maximum possible change one person's data can cause.
+
+The safe formula: **sensitivity = max_value − min_value** for the field.
+
+If you clamp salaries to \$30k–\$200k with ``min_val`` / ``max_val``, set ``sensitivity`` to 170k. This way the DP noise is proportional to your actual data range.
+
+**Picking delta**
+
+Standard default: ``1e-5`` (1 in 100,000 chance of privacy breach). Or set it to ``1 / number_of_records``.
 
 .. code-block:: json
 
@@ -367,16 +470,47 @@ Common use: Ages, salaries, purchase amounts, measurements.
      }
    }
 
-**Parameters explained:**
+**All parameters quick reference**
 
-- ``sigma``: Standard deviation of noise. Larger = more noise = more privacy.
-- ``seed``: Optional. Use the same seed to reproduce identical noise (useful for consistent anonymization across datasets).
-- ``min_val``: Minimum value after noise (clip lower bound).
-- ``max_val``: Maximum value after noise (clip upper bound).
-- ``precision``: Round to N decimal places (0 = integer).
-- ``epsilon``: Privacy budget (smaller = stronger privacy).
-- ``sensitivity``: Maximum change in output when one person's data changes.
-- ``delta``: Probability of privacy breach (default: 1e-5).
+.. list-table::
+   :header-rows: 1
+
+   * - Parameter
+     - Mode
+     - What it does
+     - How to choose
+   * - ``sigma``
+     - Direct
+     - Std dev of noise
+     - ~5–10% of data range
+   * - ``epsilon``
+     - DP
+     - Privacy budget
+     - 0.1–0.5 (high), 0.5–2 (moderate), 2–10 (low)
+   * - ``sensitivity``
+     - DP
+     - Max possible change
+     - max − min of your field
+   * - ``delta``
+     - DP
+     - Failure probability
+     - 1e-5 (default)
+   * - ``min_val``
+     - Both
+     - Lower clip bound
+     - Realistic minimum
+   * - ``max_val``
+     - Both
+     - Upper clip bound
+     - Realistic maximum
+   * - ``precision``
+     - Both
+     - Decimal places
+     - 0 for integers
+   * - ``seed``
+     - Both
+     - Reproducible noise
+     - Any string; same seed = same noise
 
 **Example 1: Direct Sigma Mode**
 
@@ -446,12 +580,13 @@ Common use: Ages, salaries, purchase amounts, measurements.
    {
      "salary": 98234,
      "dept": "Engineering"
-   }
+     }
 
-Strategy: Generalization
-~~~~~~~~~~~~~~~~~~~~~~~~~
+----
 
-**Coarsens data to broader categories.**
+.. rubric:: Generalize
+
+The **Generalize** strategy coarsens data to broader categories.
 
 Use when: You want to keep the type of information but remove specificity.
 
@@ -633,7 +768,9 @@ Common use: Dates (year only), locations (state instead of city), ages (brackets
 
    {
      "full_address": "USA,Home"
-   }
+    }
+
+----
 
 Choosing the Right Strategy: A Privacy-Compliance Approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

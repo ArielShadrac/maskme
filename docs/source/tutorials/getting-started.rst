@@ -810,6 +810,360 @@ Choosing the Right Strategy: A Privacy-Compliance Approach
 Part 3: Measuring Privacy and Utility
 ====================================
 
+Anonymization is not a one-shot decision — you need to **measure** the outcome
+to verify privacy is protected and data remains useful.
+
+MaskMe provides two families of analytics:
+
+- **Risk analytics** — measure re-identification risk
+- **Utility analytics** — measure data quality loss
+
+Both are available through CLI and Python API, and can generate rich HTML reports.
+
+Using the CLI
+~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Re-identification risk
+   maskme analyze risk --input visits_masked.csv \
+       --qi age postal_code --sa diagnosis \
+       --report risk_report.html
+
+   # Data utility
+   maskme analyze utility --original visits.csv \
+       --anonymized visits_masked.csv \
+       --report utility_report.html
+
+The ``--qi`` flag takes the **quasi-identifier** fields — attributes that could
+be combined to re-identify someone (age + postal code, birthdate + gender, etc.).
+The ``--sa`` flag specifies the **sensitive attribute** to protect.
+
+Re-Identification Risk
+~~~~~~~~~~~~~~~~~~~~~~
+
+Three metrics work together to measure re-identification risk.
+
+**k-Anonymity**
+
+Every record must be indistinguishable from at least ``k-1`` other records
+based on quasi-identifiers. A lower ``k_min`` means some records are easy to
+single out.
+
+.. code-block:: bash
+
+   maskme analyze risk --input visits_masked.csv \
+       --qi age postal_code --sa diagnosis \
+       --k-threshold 5
+
+Key metrics in the output:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Metric
+     - What it tells you
+   * - ``k_min``
+     - Smallest equivalence class size (worst case)
+   * - ``k_mean`` / ``k_median``
+     - Typical class size across the dataset
+   * - ``at_risk_records``
+     - Records in classes below the threshold
+   * - ``pct_at_risk``
+     - Percentage of records at risk
+
+If ``k_min`` is 1, the dataset has unique records that can be directly
+re-identified. Solution: generalize or suppresse more aggressively.
+
+**l-Diversity**
+
+Even when records are k-anonymous, if everyone in a class has the same
+sensitive value (e.g. all have the same diagnosis), attribute disclosure
+is possible. l-diversity requires at least ``l`` distinct sensitive values
+per equivalence class.
+
+.. code-block:: bash
+
+   maskme analyze risk --input visits_masked.csv \
+       --qi age postal_code --sa diagnosis \
+       --l-threshold 3
+
+Key metrics:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Metric
+     - What it tells you
+   * - ``l_min``
+     - Fewest distinct sensitive values in any class
+   * - ``at_risk_classes``
+     - Classes with fewer distinct values than the threshold
+
+Distinct l-diversity (the variant MaskMe uses) is a good baseline. A
+``l_min`` of 1 means at least one class has only one sensitive value —
+full attribute disclosure for those records.
+
+**t-Closeness**
+
+Measures how much the distribution of the sensitive attribute within each
+class deviates from the global distribution. Uses Earth Mover's Distance (EMD).
+
+.. code-block:: bash
+
+   maskme analyze risk --input visits_masked.csv \
+       --qi age postal_code --sa diagnosis \
+       --t-threshold 0.15
+
+Key metrics:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Metric
+     - What it tells you
+   * - ``t_max``
+     - Maximum EMD across all classes (worst case)
+   * - ``at_risk_classes``
+     - Classes exceeding the threshold
+
+A ``t_max`` above ``0.2`` means some classes have a significantly different
+sensitive distribution — an adversary could infer the sensitive value with
+higher confidence than from the global distribution alone.
+
+**Threshold recommendations:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Metric
+     - Strict
+     - Moderate
+     - Relaxed
+   * - k-anonymity
+     - 5–10
+     - 3–5
+     - 2
+   * - l-diversity
+     - 5+
+     - 3–5
+     - 2
+   * - t-closeness
+     - 0.05–0.10
+     - 0.10–0.20
+     - 0.20–0.50
+
+Python API — Risk
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from maskme.analytics.risk import run, report
+
+   records = [
+       {"age": "30-35", "postal_code": "75001", "diagnosis": "Flu"},
+       {"age": "30-35", "postal_code": "75001", "diagnosis": "Diabetes"},
+       {"age": "30-35", "postal_code": "75001", "diagnosis": "Flu"},
+       # ...
+   ]
+
+   results = run(
+       records=records,
+       quasi_identifiers=["age", "postal_code"],
+       sensitive_attr="diagnosis",
+   )
+
+   for r in results:
+       status = "✓" if r.passed else "✗"
+       print(f"{status}  {r.name}: passed={r.passed}")
+
+   # HTML report
+   report.generate(
+       results,
+       output_path="risk_report.html",
+       dataset_info={"records": len(records)},
+   )
+
+Run individual metrics:
+
+.. code-block:: python
+
+   results = run(
+       records=records,
+       quasi_identifiers=["age", "postal_code"],
+       sensitive_attr="diagnosis",
+       analytics=["k_anonymity", "t_closeness"],  # skip l-diversity
+       k_threshold=5,
+       t_threshold=0.1,
+   )
+
+Data Utility
+~~~~~~~~~~~~
+
+Anonymization always destroys some information. Utility metrics measure
+**how much** data quality is preserved.
+
+**Field Retention**
+
+Measures how many values remain unchanged per field.
+
+.. code-block:: bash
+
+   maskme analyze utility --original visits.csv \
+       --anonymized visits_masked.csv \
+
+Key output:
+
+.. code-block:: text
+
+   ✓  Field Retention           score=0.85  passed
+
+This means 85% of values across all fields were preserved identically.
+If a score is low, check which fields are being heavily modified — they
+may be over-anonymized.
+
+**Statistical Fidelity**
+
+Compares statistical properties before and after anonymization: means,
+standard deviations, distributions. For categorical fields, uses Total
+Variation Distance; for numerical, uses normalised delta and Spearman
+rank correlation.
+
+.. code-block:: text
+
+   ✓  Statistical Fidelity      score=0.72  passed
+
+A score of 0.72 means statistical patterns are reasonably preserved.
+Low-scoring fields are listed in the detailed output.
+
+**Information Loss**
+
+The Information Loss Index (ILI) measures how much each field deviates
+from its original values. Utility score = ``1 − ILI``.
+
+.. code-block:: text
+
+   ✓  Information Loss          score=0.65  passed
+
+Numerical fields use Normalised Mean Absolute Error — a value with 20%
+error contributes ILI of 0.2. Categorical fields count any change
+(hash, redact) as full loss (ILI = 1.0).
+
+**Threshold recommendations:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Metric
+     - Good
+     - Acceptable
+     - Needs review
+   * - Field Retention
+     - ≥ 0.80
+     - 0.50–0.80
+     - < 0.50
+   * - Statistical Fidelity
+     - ≥ 0.80
+     - 0.60–0.80
+     - < 0.60
+   * - Information Loss (score)
+     - ≥ 0.80
+     - 0.50–0.80
+     - < 0.50
+
+Python API — Utility
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from maskme.analytics.utility import run, report
+
+   results = run(
+       original=original_records,
+       anonymised=anonymised_records,
+   )
+
+   for r in results:
+       print(f"{r.name}: score={r.score:.2f}  passed={r.passed}")
+
+   # HTML report
+   report.generate(
+       results,
+       output_path="utility_report.html",
+       dataset_info={"records": len(original_records)},
+   )
+
+Explicitly declare field types for better accuracy:
+
+.. code-block:: python
+
+   results = run(
+       original=original_records,
+       anonymised=anonymised_records,
+       numerical_fields=["age", "purchase_count"],
+       categorical_fields=["region", "diagnosis"],
+       field_retention_threshold=0.6,
+       statistical_fidelity_threshold=0.7,
+       information_loss_threshold=0.6,
+   )
+
+HTML Reports
+~~~~~~~~~~~~
+
+Both `maskme analyze risk` and `maskme analyze utility` generate
+self-contained HTML reports when ``--report`` is specified:
+
+.. code-block:: bash
+
+   maskme analyze risk --input visits_masked.csv \
+       --qi age postal_code --sa diagnosis \
+       --k-threshold 3 --report risk_report.html
+   # Opens in any browser → risk_report.html
+
+   maskme analyze utility --original visits.csv \
+       --anonymized visits_masked.csv \  
+       --report utility_report.html
+   # → utility_report.html
+
+Each report includes:
+
+- Executive summary with pass/fail badges
+- Per-metric section with score, threshold, and SVG charts
+- Detailed per-field / per-class breakdowns
+- Recommendations for improvement
+
+The Privacy-Utility Trade-off
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is no single "right" threshold. The balance depends on your use case:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Scenario
+     - Privacy priority
+     - Utility priority
+     - Typical thresholds
+   * - Medical research
+     - High
+     - High
+     - k=5, l=3, t=0.1, utility ≥ 0.7
+   * - Public dataset release
+     - High
+     - Medium
+     - k=10, l=5, t=0.05, utility ≥ 0.5
+   * - Internal analytics
+     - Medium
+     - High
+     - k=3, l=2, t=0.2, utility ≥ 0.8
+   * - Exploratory (masked sample)
+     - Low
+     - Maximum
+     - k=2, l=2, t=0.5, utility ≥ 0.9
+
+**Rule of thumb:** Run risk + utility together. If privacy passes but utility
+fails, your anonymization is too aggressive. If utility passes but privacy
+fails, you need stronger strategies. Adjust and re-measure.
 
 Part 4: Anonymizing Unstructured Text with NER
 ===============================================

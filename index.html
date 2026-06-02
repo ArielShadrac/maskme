@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaskMe — Agnostic Data Anonymization for Python</title>
+    <meta name="description" content="MaskMe is a lightweight, modular Python library for anonymizing structured, semi-structured, and unstructured data while preserving statistical utility. Built for GDPR, HIPAA, and modern privacy compliance.">
+    <meta name="keywords" content="data anonymization, data masking, python, privacy, GDPR, HIPAA, de-identification, data privacy, open source">
+    <meta name="author" content="Lucien Kiemde">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ============================================
+         NAVIGATION
+         ============================================ -->
+    <nav id="navbar">
+        <a href="#" class="nav-logo">
+            <span> MaskMe &#12296;&#12296;</span>
+        </a>
+        <div class="nav-menu">
+            <ul class="nav-links">
+                <li><a href="#spectrum">Spectrum</a></li>
+                <li><a href="#get-started">Get Started</a></li>
+                <li><a href="#references">References</a></li>
+                <li><a href="https://maskme.readthedocs.io/en/latest/" rel="noopener">Documentation</a></li>
+            </ul>
+        </div>
+        <div class="nav-actions">
+            <a href="https://github.com/k13lucien/maskme" class="nav-github" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>GitHub</span>
+            </a>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ============================================
+         1. PRESENTATION
+         ============================================ -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                <span>v0.1.0 &middot; Open Source &middot; MIT License</span>
+            </div>
+            <h1 class="gradient-text"><span class="text-emphasis">Unlock</span> sensitive data for universal statistical utility.</h1>
+            <p class="hero-tagline">
+                A lightweight, modular Python library for anonymizing structured, semi-structured, and unstructured data 
+                while preserving its statistical utility. Built for GDPR, HIPAA, and modern privacy compliance.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-install" id="installBtn" onclick="copyInstall()">
+                    <span id="installText">pip install maskme</span>
+                    <span style="font-size:0.75rem;color:var(--color-text-muted);">click to copy</span>
+                </button>
+                <a href="#get-started" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/k13lucien/maskme" class="nav-github" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    <span>View on GitHub</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tags Section -->
+    <div class="tags-section">
+        <div class="tags-container">
+            <span class="tag">Privacy Engineering</span>
+            <span class="tag">Data Anonymization</span>
+            <span class="tag">Statistical Utility</span>
+            <span class="tag">GDPR Compliant</span>
+            <span class="tag">HIPAA Ready</span>
+            <span class="tag">Open Source</span>
+            <span class="tag">Privacy Engineering</span>
+            <span class="tag">Data Anonymization</span>
+            <span class="tag">Statistical Utility</span>
+            <span class="tag">GDPR Compliant</span>
+            <span class="tag">HIPAA Ready</span>
+            <span class="tag">Open Source</span>
+        </div>
+    </div>
+
+    <!-- Privacy-Utility Spectrum -->
+    <section class="section" id="spectrum">
+        <div class="section-header reveal">
+            <div class="section-divider"></div>
+            <h2>The Privacy-Utility Spectrum</h2>
+            <p>
+                Every masking decision involves a fundamental trade-off. MaskMe exposes this explicitly, 
+                letting you choose the right balance for each field in your dataset.
+            </p>
+        </div>
+        <div class="spectrum-container reveal">
+            <div class="spectrum-header">
+                <span class="label-privacy">Maximum Privacy</span>
+                <span class="label-utility">Maximum Utility</span>
+            </div>
+            <div class="spectrum-bar">
+                <div class="spectrum-strategy drop">DROP</div>
+                <div class="spectrum-strategy hash">HASH</div>
+                <div class="spectrum-strategy redact">REDACT</div>
+                <div class="spectrum-strategy noise">NOISE</div>
+                <div class="spectrum-strategy generalize">GENERALIZE</div>
+                <div class="spectrum-strategy keep">KEEP</div>
+            </div>
+            <div class="spectrum-info">
+                <div class="spectrum-info-item">
+                    <strong>6 Strategies</strong>
+                    One for every privacy requirement
+                </div>
+                <div class="spectrum-info-item">
+                    <strong>Per-Field Control</strong>
+                    Dot notation for nested targeting
+                </div>
+                <div class="spectrum-info-item">
+                    <strong>Built-in Validation</strong>
+                    Statistical utility metrics
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Strategy Cards -->
+    <section class="section section-alt" id="strategies">
+        <div class="section-header reveal">
+            <h2>Masking Strategies</h2>
+            <p>Six complementary approaches. Apply them selectively to preserve analytical value where it matters.</p>
+        </div>
+        <div class="strategies-grid">
+            <div class="strategy-card drop reveal">
+                <span class="card-label">Drop</span>
+                <h3>Complete Removal</h3>
+                <p>Permanently delete the field. Maximum privacy with no possibility of re-identification.</p>
+                <div class="card-params">No parameters</div>
+                <div class="card-use">Direct identifiers, unnecessary columns</div>
+            </div>
+            <div class="strategy-card hash reveal">
+                <span class="card-label">Hash</span>
+                <h3>Deterministic Hashing</h3>
+                <p>One-way cryptographic hash with secret salt. Enables consistent joins without exposing originals.</p>
+                <div class="card-params">algo: sha256, sha512 &middot; salt</div>
+                <div class="card-use">User IDs, foreign keys, usernames</div>
+            </div>
+            <div class="strategy-card redact reveal">
+                <span class="card-label">Redact</span>
+                <h3>Character Masking</h3>
+                <p>Replace portions of a string. Preserves format and partial visibility for validation.</p>
+                <div class="card-params">mask_char &middot; visible_chars</div>
+                <div class="card-use">Email addresses, names, phone numbers</div>
+            </div>
+            <div class="strategy-card noise reveal">
+                <span class="card-label">Noise</span>
+                <h3>Statistical Noise</h3>
+                <p>Add calibrated Gaussian or Laplacian noise with optional differential privacy guarantees.</p>
+                <div class="card-params">sigma &middot; epsilon &middot; delta &middot; seed</div>
+                <div class="card-use">Salaries, ages, clinical metrics</div>
+            </div>
+            <div class="strategy-card generalize reveal">
+                <span class="card-label">Generalize</span>
+                <h3>Value Generalization</h3>
+                <p>Group into bins or categories. Reduces granularity while maintaining analytical structure.</p>
+                <div class="card-params">step &middot; bins &middot; depth</div>
+                <div class="card-use">Age ranges (20-30), geographic zones</div>
+            </div>
+            <div class="strategy-card keep reveal">
+                <span class="card-label">Keep</span>
+                <h3>Explicit Preservation</h3>
+                <p>Retain unchanged. For analytical payloads requiring full precision downstream.</p>
+                <div class="card-params">No parameters</div>
+                <div class="card-use">Diagnosis codes, symptoms, labels</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         2. GET STARTED
+         ============================================ -->
+    <section class="section" id="get-started">
+        <div class="section-header reveal">
+            <div class="section-divider"></div>
+            <h2>Get Started</h2>
+            <p>Two interfaces, one engine. Use the Python library for programmatic control or the CLI for bulk processing.</p>
+        </div>
+        <div class="get-started-grid reveal">
+            <div class="get-started-panel">
+                <!-- Left column: stacked shrink cards -->
+                <div class="get-started-panel-left">
+                    <!-- Engine Card (shrink by default) -->
+                    <div class="get-started-card panel-card engine-card shrink">
+                        <div class="get-started-card-header">
+                            <h3>MaskMe Engine</h3>
+                            <p class="card-subtitle">Python library &middot; Full programmatic control</p>
+                            <p class="card-summary">5-step workflow: import, prepare, rules, anonymize, output.</p>
+                        </div>
+                        <div class="get-started-card-body">
+                            <pre><code><span class="comment"># 1. Import MaskMe</span>
+<span class="key">from</span> maskme <span class="key">import</span> MaskMe
+
+<span class="comment"># 2. Prepare sensitive data</span>
+<span class="key">data</span> = {
+    <span class="str">"patient"</span>: {
+        <span class="str">"id"</span>: <span class="str">"PAT-2026-0045"</span>,
+        <span class="str">"full_name"</span>: <span class="str">"Lucien Kiemde"</span>,
+        <span class="str">"birth_date"</span>: <span class="str">"1998-05-12"</span>,
+        <span class="str">"address"</span>: <span class="str">"01 BP 548, Ouagadougou"</span>
+    },
+    <span class="str">"medical_history"</span>: [<span class="str">"Asthma"</span>, <span class="str">"Allergies"</span>],
+    <span class="str">"diagnosis"</span>: <span class="str">"Acute Respiratory Distress"</span>,
+    <span class="str">"prescription"</span>: <span class="str">"Salbutamol 100mcg - 2 puffs every 4h"</span>
+}
+
+<span class="comment"># 3. Define anonymization rules</span>
+<span class="key">rules</span> = {
+    <span class="str">"patient.id"</span>: <span class="str">"hash"</span>,
+    <span class="str">"patient.full_name"</span>: <span class="str">"redact"</span>,
+    <span class="str">"patient.birth_date"</span>: <span class="str">"generalize"</span>,
+    <span class="str">"patient.address"</span>: <span class="str">"redact"</span>,
+    <span class="str">"diagnosis"</span>: <span class="str">"keep"</span>,
+    <span class="str">"prescription"</span>: <span class="str">"keep"</span>
+}
+
+<span class="comment"># 4. Apply anonymization</span>
+<span class="key">engine</span> = MaskMe(rules)
+<span class="key">result</span> = engine.mask(data)
+
+<span class="comment"># 5. Collect output</span>
+<span class="key">print</span>(result)</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- CLI Card (shrink by default) -->
+                    <div class="get-started-card panel-card cli-card shrink">
+                        <div class="get-started-card-header">
+                            <h3>MaskMe CLI</h3>
+                            <p class="card-subtitle">Command line &middot; Bulk file processing</p>
+                            <p class="card-summary">Stream or batch process files from the terminal.</p>
+                        </div>
+                        <div class="get-started-card-body">
+                            <pre><code><span class="comment"># Process a CSV file</span>
+maskme --input data.csv \
+       --rules rules.json \
+       --format csv \
+       --output clean.csv
+
+<span class="comment"># Streaming with pipes</span>
+cat data.jsonl | maskme \
+       --rules rules.json \
+       --format jsonl \
+       > clean.jsonl
+
+<span class="comment"># Validate utility</span>
+maskme validate \
+       --original data.csv \
+       --masked clean.csv \
+       --column salary</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column: expanded card (Engine by default) -->
+                <div class="get-started-panel-right">
+                    <!-- This will be cloned from the left side on toggle -->
+                    <div class="get-started-card panel-card engine-card expand" id="expandedPanel">
+                        <div class="get-started-card-header">
+                            <h3>MaskMe Engine</h3>
+                            <p class="card-subtitle">Python library · Full programmatic control</p>
+                        </div>
+                        <div class="get-started-card-body">
+                            <pre><code><span class="comment"># 1. Import MaskMe</span>
+<span class="key">from</span> maskme <span class="key">import</span> MaskMe
+
+<span class="comment"># 2. Prepare sensitive data</span>
+<span class="key">data</span> = {
+    <span class="str">"patient"</span>: {
+        <span class="str">"id"</span>: <span class="str">"PAT-2026-0045"</span>,
+        <span class="str">"full_name"</span>: <span class="str">"Lucien Kiemde"</span>,
+        <span class="str">"birth_date"</span>: <span class="str">"1998-05-12"</span>,
+        <span class="str">"address"</span>: <span class="str">"01 BP 548, Ouagadougou"</span>
+    },
+    <span class="str">"medical_history"</span>: [<span class="str">"Asthma"</span>, <span class="str">"Allergies"</span>],
+    <span class="str">"diagnosis"</span>: <span class="str">"Acute Respiratory Distress"</span>,
+    <span class="str">"prescription"</span>: <span class="str">"Salbutamol 100mcg - 2 puffs every 4h"</span>
+}
+
+<span class="comment"># 3. Define anonymization rules</span>
+<span class="key">rules</span> = {
+    <span class="str">"patient.id"</span>: {<span class="str">"strategy"</span>: <span class="str">"hash"</span>},
+    <span class="str">"patient.full_name"</span>: <span class="str">"redact"</span>,
+    <span class="str">"patient.birth_date"</span>: {<span class="str">"strategy"</span>: <span class="str">"generalize"</span>},
+    <span class="str">"patient.address"</span>: <span class="str">"redact"</span>,
+    <span class="str">"diagnosis"</span>: <span class="str">"keep"</span>,
+    <span class="str">"prescription"</span>: <span class="str">"keep"</span>
+}
+
+<span class="comment"># 4. Apply anonymization</span>
+<span class="key">engine</span> = MaskMe(rules)
+<span class="key">result</span> = engine.mask(data)
+
+<span class="comment"># 5. Collect output</span>
+<span class="key">print</span>(result)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         3. REFERENCES & CITATIONS
+         ============================================ -->
+    <section class="section section-alt" id="references">
+        <div class="section-header reveal">
+            <div class="section-divider"></div>
+            <h2>References & Citations</h2>
+            <p>If you use MaskMe in your research, please cite it using one of the formats below.</p>
+        </div>
+        
+        <div class="refs-grid reveal">
+            <!-- BibTeX -->
+            <div class="ref-card">
+                <h3>BibTeX</h3>
+                <div class="citation" id="cite-bibtex">@software{kiemde2026maskme,
+  author = {Kiemde, Lucien},
+  title = {MaskMe: Agnostic Python library for data anonymization},
+  year = {2026},
+  url = {https://github.com/k13lucien/maskme},
+  version = {0.1.0},
+  address = {Ouagadougou, Burkina Faso}
+}</div>
+                <button class="copy-btn" onclick="copyCitation('cite-bibtex')">Copy to clipboard</button>
+            </div>
+            
+            <!-- APA -->
+            <div class="ref-card">
+                <h3>APA</h3>
+                <div class="citation" id="cite-apa">Kiemde, L. (2026). MaskMe: Agnostic Python library for data anonymization (Version 0.1.0) [Computer software]. Retrieved from https://github.com/k13lucien/maskme</div>
+                <button class="copy-btn" onclick="copyCitation('cite-apa')">Copy to clipboard</button>
+            </div>
+            
+            <!-- Vancouver -->
+            <div class="ref-card">
+                <h3>Vancouver</h3>
+                <div class="citation" id="cite-vancouver">Kiemde L. MaskMe: Agnostic Python library for data anonymization [Computer software]. Version 0.1.0. Ouagadougou, Burkina Faso; 2026. Available from: https://github.com/k13lucien/maskme</div>
+                <button class="copy-btn" onclick="copyCitation('cite-vancouver')">Copy to clipboard</button>
+            </div>
+            
+            <!-- MLA -->
+            <div class="ref-card">
+                <h3>MLA</h3>
+                <div class="citation" id="cite-mla">Kiemde, Lucien. "MaskMe: Agnostic Python library for data anonymization." Version 0.1.0, 2026, https://github.com/k13lucien/maskme.</div>
+                <button class="copy-btn" onclick="copyCitation('cite-mla')">Copy to clipboard</button>
+            </div>
+        </div>
+        
+        <!-- Scientific References -->
+        <div class="section-header reveal" style="margin-top: 4rem;">
+            <h2>Scientific Foundations</h2>
+            <p>MaskMe builds upon established principles in data privacy, differential privacy, and statistical disclosure control.</p>
+        </div>
+        <div class="refs-grid reveal">
+            <div class="ref-card">
+                <h3>Differential Privacy</h3>
+                <div class="citation">Dwork, C., & Roth, A. (2014). The Algorithmic Foundations of Differential Privacy. Foundations and Trends in Theoretical Computer Science, 9(3-4), 211-407.</div>
+            </div>
+            <div class="ref-card">
+                <h3>Statistical Disclosure Control</h3>
+                <div class="citation">Hundepool, A., et al. (2012). Statistical Disclosure Control. Wiley Series in Survey Methodology. John Wiley & Sons.</div>
+            </div>
+            <div class="ref-card">
+                <h3>GDPR Article 32</h3>
+                <div class="citation">European Parliament. (2016). General Data Protection Regulation (GDPR). Article 32: Security of Processing. Official Journal of the European Union, L119, 1-88.</div>
+            </div>
+            <div class="ref-card">
+                <h3>k-Anonymity</h3>
+                <div class="citation">Sweeney, L. (2002). k-Anonymity: A Model for Protecting Privacy. International Journal of Uncertainty, Fuzziness and Knowledge-Based Systems, 10(5), 557-570.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer>
+        <div class="footer-links">
+            <a href="https://github.com/k13lucien/maskme" target="_blank">GitHub</a>
+            <a href="https://github.com/k13lucien/maskme/issues" target="_blank">Report an Issue</a>
+            <a href="https://github.com/k13lucien/maskme/blob/main/LICENSE" target="_blank">MIT License</a>
+            <a href="https://maskme.readthedocs.io/en/latest/">Documentation</a>
+        </div>
+        <p>Created by <strong>Lucien Kiemde</strong></p>
+        <p class="footer-location">Ouagadougou, Burkina Faso &middot; Empowering Data Privacy through Open Source</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

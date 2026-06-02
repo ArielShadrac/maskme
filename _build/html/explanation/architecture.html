@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Architecture: The Anonymization Engine | MaskMe</title>
+<meta content="Architecture: The Anonymization Engine | MaskMe" property="og:title"/>
+<meta content="Architecture: The Anonymization Engine | MaskMe" name="twitter:title"/>
+<link href="../_static/pygments.css?v=03e43079" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=2fb37986" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="introduction.html" rel="prev" title="Introduction to MaskMe"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">MaskMe</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">MaskMe</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html">Getting Started with MaskMe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-1-your-first-anonymization">Part 1: Your First Anonymization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-2-understanding-strategies">Part 2: Understanding Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-3-analyticsmeasuring-privacy">Part 3: Analytics—Measuring Privacy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#part-4-real-world-example">Part 4: Real-World Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started.html#next-steps">Next Steps</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/custom-strategy.html">How to Create a Custom Strategy</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/strategies.html">Anonymization Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction to MaskMe</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture: The Anonymization Engine</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">MaskMe</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Architecture: The Anonymization Engine</span>
+</nav>
+<div id="content" role="main">
+<section id="architecture-the-anonymization-engine">
+<h1>Architecture: The Anonymization Engine</h1>
+<p>Understanding MaskMe’s design helps you use it effectively and extend it for custom needs.</p>
+<section id="design-principles">
+<h2>Design Principles</h2>
+<p><strong>Modularity</strong>: Each component (engine, strategies, I/O handlers, analytics) is independent.</p>
+<p><strong>Composability</strong>: Mix strategies, formats, and analytics as needed.</p>
+<p><strong>Simplicity</strong>: One mental model works for CLI, Python API, and custom extensions.</p>
+<p><strong>Streaming</strong>: Process data record-by-record to handle datasets larger than RAM.</p>
+<p><strong>Observability</strong>: Measure privacy formally; don’t guess.</p>
+<p><strong>Extensibility</strong>: Add custom strategies or I/O handlers without modifying core code.</p>
+</section>
+<section id="high-level-overview">
+<h2>High-Level Overview</h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Input Data (CSV/JSON/JSONL)
+</span><span id="line-2">       ↓
+</span><span id="line-3">I/O Handler (parse records)
+</span><span id="line-4">       ↓
+</span><span id="line-5">Engine (apply rules + strategies)
+</span><span id="line-6">       ↓
+</span><span id="line-7">Output Data (CSV/JSON/JSONL)
+</span><span id="line-8">       ↓
+</span><span id="line-9">Analytics (measure privacy)
+</span></code></pre></div>
+</div>
+</section>
+<section id="the-engine-core-anonymization-logic">
+<h2>The Engine: Core Anonymization Logic</h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">MaskMe</span></code> engine is the heart of MaskMe. It:</p>
+<ol class="arabic simple">
+<li><p>Receives a rules dict (e.g., <code class="docutils literal notranslate"><span class="pre">{"email":</span> <span class="pre">"hash",</span> <span class="pre">"id":</span> <span class="pre">"drop"}</span></code>)</p></li>
+<li><p>For each record, resolves strategies and applies transformations</p></li>
+<li><p>Streams output record-by-record (memory efficient)</p></li>
+</ol>
+<p><strong>Workflow for a single record</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Input Record: {"id": 1, "email": "alice@example.com", "name": "Alice"}
+</span><span id="line-2">
+</span><span id="line-3">For each rule in rules dict:
+</span><span id="line-4">  ├─ Rule: "id" → "drop"
+</span><span id="line-5">  │  └─ Apply drop strategy → "__DROP__"
+</span><span id="line-6">  │     (Signal: remove this field)
+</span><span id="line-7">  │
+</span><span id="line-8">  ├─ Rule: "email" → "hash"
+</span><span id="line-9">  │  └─ Apply hash strategy → "d6d5d09f12b3f0f1a..."
+</span><span id="line-10">  │     (Update record)
+</span><span id="line-11">  │
+</span><span id="line-12">  └─ Rule: "name" → "keep"
+</span><span id="line-13">     └─ Apply keep strategy → "Alice"
+</span><span id="line-14">        (No change)
+</span><span id="line-15">
+</span><span id="line-16">Output Record: {"email": "d6d5d09f12b3f0f1a...", "name": "Alice"}
+</span></code></pre></div>
+</div>
+<p><strong>Key insight</strong>: Rules operate on <strong>paths</strong> (e.g., <code class="docutils literal notranslate"><span class="pre">user.email</span></code> for nested dicts).</p>
+<section id="path-resolution">
+<h3>Path Resolution</h3>
+<p>MaskMe uses dot notation for nested fields:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">record</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-2">    <span class="s2">"user"</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="line-3">        <span class="s2">"profile"</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="line-4">            <span class="s2">"email"</span><span class="p">:</span> <span class="s2">"alice@example.com"</span>
+</span><span id="line-5">        <span class="p">}</span>
+</span><span id="line-6">    <span class="p">}</span>
+</span><span id="line-7"><span class="p">}</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># Rule path: "user.profile.email"</span>
+</span><span id="line-10"><span class="c1"># MaskMe navigates: record["user"]["profile"]["email"]</span>
+</span></code></pre></div>
+</div>
+<p>This is handled by the <code class="docutils literal notranslate"><span class="pre">navigation</span></code> module (<code class="docutils literal notranslate"><span class="pre">get_nested</span></code>, <code class="docutils literal notranslate"><span class="pre">set_nested</span></code>, <code class="docutils literal notranslate"><span class="pre">delete_nested</span></code>).</p>
+</section>
+<section id="strategy-resolution">
+<h3>Strategy Resolution</h3>
+<p>Rules can be:</p>
+<p><strong>Simple (string strategy name)</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hash"</span>
+</span></code></pre></div>
+</div>
+<p><strong>Parameterized (dict with strategy + params)</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="line-2"><span class="w">  </span><span class="nt">"strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hash"</span><span class="p">,</span>
+</span><span id="line-3"><span class="w">  </span><span class="nt">"algo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sha512"</span><span class="p">,</span>
+</span><span id="line-4"><span class="w">  </span><span class="nt">"salt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my-salt"</span>
+</span><span id="line-5"><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<p>The engine resolves this and calls:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">strategies</span><span class="p">[</span><span class="s2">"hash"</span><span class="p">](</span><span class="n">value</span><span class="p">,</span> <span class="n">algo</span><span class="o">=</span><span class="s2">"sha512"</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s2">"my-salt"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Registry Pattern</strong>:</p>
+<p>Strategies are stored in a dict <code class="docutils literal notranslate"><span class="pre">STRATEGIES</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">STRATEGIES</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-2">    <span class="s2">"hash"</span><span class="p">:</span> <span class="n">hashing</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-3">    <span class="s2">"redact"</span><span class="p">:</span> <span class="n">redaction</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-4">    <span class="s2">"keep"</span><span class="p">:</span> <span class="n">noop</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-5">    <span class="s2">"drop"</span><span class="p">:</span> <span class="n">drop</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-6">    <span class="s2">"noise"</span><span class="p">:</span> <span class="n">noise</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-7">    <span class="s2">"generalize"</span><span class="p">:</span> <span class="n">generalization</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span>
+</span><span id="line-8"><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<p>This makes it easy to:
+- Look up strategies by name
+- Register custom strategies (add to the dict)
+- Mock strategies for testing</p>
+</section>
+</section>
+<section id="i-o-handlers-format-abstraction">
+<h2>I/O Handlers: Format Abstraction</h2>
+<p>MaskMe works with multiple formats (CSV, JSON, JSONL) using a consistent abstraction.</p>
+<p><strong>I/O Handler Interface</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">class</span><span class="w"> </span><span class="nc">FormatHandler</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-2">    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+</span><span id="line-3"><span class="w">        </span><span class="sd">"""Read file, yield records as dicts."""</span>
+</span><span id="line-4">
+</span><span id="line-5">    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-6"><span class="w">        </span><span class="sd">"""Write records to file."""</span>
+</span></code></pre></div>
+</div>
+<p><strong>Implementations</strong>:</p>
+<ul class="simple">
+<li><p><strong>CSVHandler</strong>: Reads CSV → dicts, writes dicts → CSV</p></li>
+<li><p><strong>JSONHandler</strong>: Reads JSON list → dicts, writes dicts → JSON array</p></li>
+<li><p><strong>JSONLHandler</strong>: Reads JSONL (one record per line) → dicts, writes JSONL</p></li>
+</ul>
+<p><strong>Key design</strong>: All handlers return/accept records as dicts. The engine doesn’t care about format.</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">customers.csv (CSV format)
+</span><span id="line-2">     ↓
+</span><span id="line-3">CSVHandler.read() → [{"id": 1, "name": "Alice"}, ...]
+</span><span id="line-4">     ↓
+</span><span id="line-5">Engine.mask(records) → [{"name": "Alice"}, ...]  (anonymized)
+</span><span id="line-6">     ↓
+</span><span id="line-7">CSVHandler.write(records) → customers_masked.csv
+</span></code></pre></div>
+</div>
+<p>The engine logic is identical whether you use CSV, JSON, or JSONL.</p>
+<section id="streaming-architecture">
+<h3>Streaming Architecture</h3>
+<p>Both I/O handlers and the engine stream data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># CSVHandler.read() is a generator</span>
+</span><span id="line-2"><span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"large_file.csv"</span><span class="p">):</span>  <span class="c1"># One record at a time</span>
+</span><span id="line-3">    <span class="c1"># Process record</span>
+</span><span id="line-4">    <span class="k">pass</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="c1"># Engine.mask() is a generator</span>
+</span><span id="line-7"><span class="k">for</span> <span class="n">anonymized_record</span> <span class="ow">in</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>  <span class="c1"># One at a time</span>
+</span><span id="line-8">    <span class="c1"># Write or process</span>
+</span><span id="line-9">    <span class="k">pass</span>
+</span></code></pre></div>
+</div>
+<p><strong>Benefit</strong>: Handle multi-GB files without loading everything into RAM.</p>
+</section>
+</section>
+<section id="the-cli-user-friendly-interface">
+<h2>The CLI: User-Friendly Interface</h2>
+<p>The CLI wraps the engine and I/O handlers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">maskme<span class="w"> </span>--rules<span class="w"> </span>rules.json<span class="w"> </span>--input<span class="w"> </span>data.csv<span class="w"> </span>--output<span class="w"> </span>masked.csv
+</span></code></pre></div>
+</div>
+<p><strong>Steps</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Parse rules</strong>: Load and validate <code class="docutils literal notranslate"><span class="pre">rules.json</span></code></p></li>
+<li><p><strong>Detect format</strong>: Infer CSV/JSON/JSONL from file extensions</p></li>
+<li><p><strong>Get handlers</strong>: Instantiate appropriate I/O handler</p></li>
+<li><p><strong>Initialize engine</strong>: Create MaskMe with rules</p></li>
+<li><p><strong>Stream</strong>: Read records → mask → write records</p></li>
+</ol>
+<p><strong>Pseudo-code</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">rules_path</span><span class="p">,</span> <span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+</span><span id="line-2">    <span class="n">rules</span> <span class="o">=</span> <span class="n">load_rules</span><span class="p">(</span><span class="n">rules_path</span><span class="p">)</span>
+</span><span id="line-3">    <span class="n">fmt</span> <span class="o">=</span> <span class="n">detect_format</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+</span><span id="line-4">
+</span><span id="line-5">    <span class="n">handler</span> <span class="o">=</span> <span class="n">get_handler</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+</span><span id="line-6">    <span class="n">masker</span> <span class="o">=</span> <span class="n">MaskMe</span><span class="p">(</span><span class="n">rules</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8">    <span class="n">input_records</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+</span><span id="line-9">    <span class="n">masked_records</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">input_records</span><span class="p">)</span>
+</span><span id="line-10">    <span class="n">handler</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">masked_records</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="analytics-module">
+<h2>Analytics Module</h2>
+<p>After anonymization, measure privacy:</p>
+<p><strong>Metrics computed</strong>:</p>
+<ul class="simple">
+<li><p><strong>K-anonymity</strong>: Minimum group size for quasi-identifiers</p></li>
+<li><p><strong>L-diversity</strong>: Diversity of sensitive attributes within groups</p></li>
+<li><p><strong>T-closeness</strong>: Distance between masked and original distributions</p></li>
+<li><p><strong>Information loss</strong>: Aggregate utility metrics</p></li>
+</ul>
+<p><strong>Architecture</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Metric classes (compute.py)</span>
+</span><span id="line-2"><span class="k">class</span><span class="w"> </span><span class="nc">KAnonymity</span><span class="p">:</span>
+</span><span id="line-3">    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">quasi_identifiers</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="k">class</span><span class="w"> </span><span class="nc">LDiversity</span><span class="p">:</span>
+</span><span id="line-6">    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">quasi_identifiers</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Results aggregation (base.py)</span>
+</span><span id="line-9"><span class="k">class</span><span class="w"> </span><span class="nc">AnalyticResult</span><span class="p">:</span>
+</span><span id="line-10">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="line-11">    <span class="n">passed</span><span class="p">:</span> <span class="nb">bool</span>
+</span><span id="line-12">    <span class="n">details</span><span class="p">:</span> <span class="n">Dict</span>
+</span><span id="line-13">    <span class="n">charts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Chart</span><span class="p">]</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="c1"># Reporting (report.py)</span>
+</span><span id="line-16"><span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">dataset_info</span><span class="p">):</span>
+</span><span id="line-17">    <span class="c1"># Generates HTML report with charts and summaries</span>
+</span></code></pre></div>
+</div>
+<p><strong>Usage flow</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Original Records + Masked Records
+</span><span id="line-2">       ↓
+</span><span id="line-3">Compute K-anonymity, L-diversity, etc.
+</span><span id="line-4">       ↓
+</span><span id="line-5">Create AnalyticResult objects
+</span><span id="line-6">       ↓
+</span><span id="line-7">Generate HTML report
+</span><span id="line-8">       ↓
+</span><span id="line-9">Privacy report (human-readable)
+</span></code></pre></div>
+</div>
+</section>
+<section id="design-patterns-used">
+<h2>Design Patterns Used</h2>
+<p><strong>Registry Pattern</strong>:</p>
+<p>Strategies are registered in a dict, enabling:
+- Dynamic strategy lookup
+- Easy custom strategy registration
+- Dependency injection for testing</p>
+<p><strong>Strategy Pattern</strong>:</p>
+<p>Each strategy is a callable with the same interface:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</span></code></pre></div>
+</div>
+<p>This enables:
+- Uniform treatment across strategies
+- Easy swapping/composition
+- Clear contracts</p>
+<p><strong>Factory Pattern</strong>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">get_handler(format_name)</span></code> returns the appropriate handler:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">get_handler</span><span class="p">(</span><span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FormatHandler</span><span class="p">:</span>
+</span><span id="line-2">    <span class="n">handler_class</span> <span class="o">=</span> <span class="n">IO_HANDLERS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
+</span><span id="line-3">    <span class="k">return</span> <span class="n">handler_class</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p><strong>Generator Pattern</strong>:</p>
+<p>Readers and the engine use generators for memory efficiency:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+</span><span id="line-2">    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+</span><span id="line-3">        <span class="k">yield</span> <span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="n">records</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+</span><span id="line-6">    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+</span><span id="line-7">        <span class="k">yield</span> <span class="n">process</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="extension-points">
+<h2>Extension Points</h2>
+<p>To extend MaskMe:</p>
+<p><strong>1. Add a Custom Strategy</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">my_strategy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span id="line-2">    <span class="k">return</span> <span class="n">transform</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">masker</span><span class="o">.</span><span class="n">strategies</span><span class="p">[</span><span class="s2">"my_strategy"</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_strategy</span>
+</span></code></pre></div>
+</div>
+<p><strong>2. Add a Custom I/O Handler</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">class</span><span class="w"> </span><span class="nc">MyFormatHandler</span><span class="p">(</span><span class="n">FormatHandler</span><span class="p">):</span>
+</span><span id="line-2">    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+</span><span id="line-3">        <span class="c1"># Yield dicts</span>
+</span><span id="line-4">
+</span><span id="line-5">    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+</span><span id="line-6">        <span class="c1"># Write dicts</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">IO_HANDLERS</span><span class="p">[</span><span class="s2">"myformat"</span><span class="p">]</span> <span class="o">=</span> <span class="n">MyFormatHandler</span>
+</span></code></pre></div>
+</div>
+<p><strong>3. Add a Custom Analytic</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">class</span><span class="w"> </span><span class="nc">MyAnalytic</span><span class="p">:</span>
+</span><span id="line-2">    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">):</span>
+</span><span id="line-3">        <span class="k">return</span> <span class="n">AnalyticResult</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>4. Subclass the Engine</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">class</span><span class="w"> </span><span class="nc">MyMaskMe</span><span class="p">(</span><span class="n">MaskMe</span><span class="p">):</span>
+</span><span id="line-2">    <span class="k">def</span><span class="w"> </span><span class="nf">_process_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+</span><span id="line-3">        <span class="c1"># Custom pre/post-processing</span>
+</span><span id="line-4">        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_process_record</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="data-flow-diagrams">
+<h2>Data Flow Diagrams</h2>
+<p><strong>CLI Flow</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">User Input (rules.json, data.csv)
+</span><span id="line-2">         ↓
+</span><span id="line-3">CLI Parser
+</span><span id="line-4">         ↓
+</span><span id="line-5">Load Rules &amp; Detect Format
+</span><span id="line-6">         ↓
+</span><span id="line-7">I/O Handler: Read CSV
+</span><span id="line-8">         ↓
+</span><span id="line-9">Engine: Apply Strategies (streaming)
+</span><span id="line-10">         ↓
+</span><span id="line-11">I/O Handler: Write CSV
+</span><span id="line-12">         ↓
+</span><span id="line-13">Progress Logging
+</span><span id="line-14">         ↓
+</span><span id="line-15">Output (masked.csv)
+</span></code></pre></div>
+</div>
+<p><strong>Python API Flow</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">User Code
+</span><span id="line-2">         ↓
+</span><span id="line-3">Load Data (any way)
+</span><span id="line-4">         ↓
+</span><span id="line-5">Create MaskMe(rules)
+</span><span id="line-6">         ↓
+</span><span id="line-7">Call masker.mask(records)
+</span><span id="line-8">         ↓
+</span><span id="line-9">Process Anonymized Records
+</span><span id="line-10">         ↓
+</span><span id="line-11">User handles I/O
+</span></code></pre></div>
+</div>
+<p><strong>Analytics Flow</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Original + Masked Records
+</span><span id="line-2">         ↓
+</span><span id="line-3">Compute Metrics (K-anon, L-div, etc.)
+</span><span id="line-4">         ↓
+</span><span id="line-5">AnalyticResult Objects
+</span><span id="line-6">         ↓
+</span><span id="line-7">Generate Report (HTML)
+</span><span id="line-8">         ↓
+</span><span id="line-9">Privacy Report
+</span></code></pre></div>
+</div>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics</h2>
+<p><strong>Time Complexity</strong>:</p>
+<ul class="simple">
+<li><p>Per record: O(number of rules) with O(1) average strategy execution</p></li>
+<li><p>Total: O(n × m) where n = records, m = rules</p></li>
+</ul>
+<p><strong>Space Complexity</strong>:</p>
+<ul class="simple">
+<li><p>Streaming: O(1) per record (constant memory during processing)</p></li>
+<li><p>Rules + strategies: O(m) where m = number of rules</p></li>
+<li><p>Output buffering: O(k) where k = write buffer size (typically small)</p></li>
+</ul>
+<p><strong>Large-file handling</strong>:</p>
+<ul class="simple">
+<li><p>MaskMe handles multi-GB files efficiently</p></li>
+<li><p>No need to load entire dataset into RAM</p></li>
+<li><p>Bottleneck is typically I/O, not processing</p></li>
+</ul>
+</section>
+<section id="deployment-considerations">
+<h2>Deployment Considerations</h2>
+<p><strong>CLI Deployment</strong>:</p>
+<ul class="simple">
+<li><p>Package as entry point (poetry, setuptools)</p></li>
+<li><p>Use environment variables for sensitive config (salt, API keys)</p></li>
+<li><p>Log progress for long-running jobs</p></li>
+<li><p>Add dry-run flag (<code class="docutils literal notranslate"><span class="pre">--limit</span></code>) for testing</p></li>
+</ul>
+<p><strong>Python API Deployment</strong>:</p>
+<ul class="simple">
+<li><p>Import as library in data pipelines</p></li>
+<li><p>Handle errors gracefully (invalid rules, bad data)</p></li>
+<li><p>Use async/threading for parallelization (outside MaskMe)</p></li>
+<li><p>Cache rules to avoid reloading</p></li>
+</ul>
+<p><strong>Analytics Deployment</strong>:</p>
+<ul class="simple">
+<li><p>Run separately after anonymization</p></li>
+<li><p>Store HTML reports for audit trails</p></li>
+<li><p>Alert if privacy metrics fail thresholds</p></li>
+<li><p>Version reports with anonymization batch</p></li>
+</ul>
+</section>
+<section id="security-considerations">
+<h2>Security Considerations</h2>
+<p><strong>Salt Management</strong>:</p>
+<ul class="simple">
+<li><p>Salt should be random and organization-specific</p></li>
+<li><p>Store in secure configuration (not in rules files)</p></li>
+<li><p>Different salts for different datasets (optional)</p></li>
+<li><p>Rotate salts periodically (new salt = new anonymization)</p></li>
+</ul>
+<p><strong>Error Messages</strong>:</p>
+<ul class="simple">
+<li><p>Don’t leak sensitive data in error messages</p></li>
+<li><p>Validate rules before processing</p></li>
+<li><p>Log errors securely (no PII in logs)</p></li>
+</ul>
+<p><strong>Input Validation</strong>:</p>
+<ul class="simple">
+<li><p>Validate rules structure</p></li>
+<li><p>Check file permissions before reading/writing</p></li>
+<li><p>Validate CSV/JSON structure early</p></li>
+</ul>
+<p><strong>Access Control</strong>:</p>
+<ul class="simple">
+<li><p>Limit who can write custom strategies</p></li>
+<li><p>Audit rules file changes</p></li>
+<li><p>Require approval for rule changes</p></li>
+</ul>
+</section>
+<section id="next-steps">
+<h2>Next Steps</h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../tutorials/getting-started.html"><span class="doc">Getting Started with MaskMe</span></a> — Learn by example</p></li>
+<li><p><a class="reference internal" href="../reference/strategies.html"><span class="doc">Anonymization Strategies</span></a> — Understand each strategy in detail</p></li>
+<li><p><a class="reference internal" href="../how-to/custom-strategy.html"><span class="doc">How to Create a Custom Strategy</span></a> — Extend MaskMe with custom logic</p></li>
+</ul>
+</section>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#design-principles'" class="reference internal" href="#design-principles">Design Principles</a></li>
+<li><a :data-current="activeSection === '#high-level-overview'" class="reference internal" href="#high-level-overview">High-Level Overview</a></li>
+<li><a :data-current="activeSection === '#the-engine-core-anonymization-logic'" class="reference internal" href="#the-engine-core-anonymization-logic">The Engine: Core Anonymization Logic</a><ul>
+<li><a :data-current="activeSection === '#path-resolution'" class="reference internal" href="#path-resolution">Path Resolution</a></li>
+<li><a :data-current="activeSection === '#strategy-resolution'" class="reference internal" href="#strategy-resolution">Strategy Resolution</a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#i-o-handlers-format-abstraction'" class="reference internal" href="#i-o-handlers-format-abstraction">I/O Handlers: Format Abstraction</a><ul>
+<li><a :data-current="activeSection === '#streaming-architecture'" class="reference internal" href="#streaming-architecture">Streaming Architecture</a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#the-cli-user-friendly-interface'" class="reference internal" href="#the-cli-user-friendly-interface">The CLI: User-Friendly Interface</a></li>
+<li><a :data-current="activeSection === '#analytics-module'" class="reference internal" href="#analytics-module">Analytics Module</a></li>
+<li><a :data-current="activeSection === '#design-patterns-used'" class="reference internal" href="#design-patterns-used">Design Patterns Used</a></li>
+<li><a :data-current="activeSection === '#extension-points'" class="reference internal" href="#extension-points">Extension Points</a></li>
+<li><a :data-current="activeSection === '#data-flow-diagrams'" class="reference internal" href="#data-flow-diagrams">Data Flow Diagrams</a></li>
+<li><a :data-current="activeSection === '#performance-characteristics'" class="reference internal" href="#performance-characteristics">Performance Characteristics</a></li>
+<li><a :data-current="activeSection === '#deployment-considerations'" class="reference internal" href="#deployment-considerations">Deployment Considerations</a></li>
+<li><a :data-current="activeSection === '#security-considerations'" class="reference internal" href="#security-considerations">Security Considerations</a></li>
+<li><a :data-current="activeSection === '#next-steps'" class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2026, MIT License - Lucien KIEMDE - Code with purpose. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.1.0</a></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=01f34227"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script defer="defer" src="../_static/theme.js?v=d6a9845b"></script>
+</body>
+</html>
